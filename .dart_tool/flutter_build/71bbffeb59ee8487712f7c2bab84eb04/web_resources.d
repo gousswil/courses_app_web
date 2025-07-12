@@ -1,0 +1,1 @@
+:  /workspaces/courses_app_web/web/index.html
