@@ -1,33 +1,38 @@
 
 import 'package:flutter/material.dart';
+import 'expense_form.dart';
 
 void main() => runApp(CoursesApp());
 
-class CoursesApp extends StatelessWidget {
+class AccueilPage extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Courses',
-      theme: ThemeData(
-        colorScheme: ColorScheme.light(
-          primary: Colors.grey[900]!,
-          secondary: Colors.blueGrey,
-        ),
-        scaffoldBackgroundColor: Colors.white,
-      ),
-      home: AccueilPage(),
-    );
-  }
+  State<AccueilPage> createState() => _AccueilPageState();
 }
 
-class AccueilPage extends StatelessWidget {
+class _AccueilPageState extends State<AccueilPage> {
+  int _selectedIndex = 0;
+
+  final List<Widget> _pages = [
+    const Center(child: Text('Bienvenue dans Courses')),
+    const Center(child: Text('Historique à venir')),
+    const ExpenseFormPage(), // la page d'ajout
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Accueil')),
-      body: Center(child: Text('Bienvenue dans Courses')),
+      appBar: AppBar(title: const Text('Courses')),
+      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        items: [
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Accueil'),
           BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'Historique'),
           BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Ajouter'),
@@ -36,3 +41,4 @@ class AccueilPage extends StatelessWidget {
     );
   }
 }
+
