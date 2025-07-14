@@ -1,21 +1,37 @@
-
 import 'package:flutter/material.dart';
-import 'expense_form.dart';
+import 'expense_form.dart'; // Assure-toi que ce fichier existe
 
 void main() => runApp(CoursesApp());
 
-class AccueilPage extends StatefulWidget {
+class CoursesApp extends StatelessWidget {
   @override
-  State<AccueilPage> createState() => _AccueilPageState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Courses',
+      theme: ThemeData(
+        colorScheme: ColorScheme.light(
+          primary: Colors.grey[900]!,
+          secondary: Colors.blueGrey,
+        ),
+        scaffoldBackgroundColor: Colors.white,
+      ),
+      home: HomePage(),
+    );
+  }
 }
 
-class _AccueilPageState extends State<AccueilPage> {
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    const Center(child: Text('Bienvenue dans Courses')),
-    const Center(child: Text('Historique à venir')),
-    const ExpenseFormPage(), // la page d'ajout
+  static final List<Widget> _pages = <Widget>[
+    AccueilPage(),
+    HistoriquePage(), // À créer si ce n’est pas encore fait
+    ExpenseForm(),     // Le formulaire d'ajout
   ];
 
   void _onItemTapped(int index) {
@@ -27,7 +43,9 @@ class _AccueilPageState extends State<AccueilPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Courses')),
+      appBar: AppBar(
+        title: Text('Courses'),
+      ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -42,3 +60,16 @@ class _AccueilPageState extends State<AccueilPage> {
   }
 }
 
+class AccueilPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Bienvenue dans Courses'));
+  }
+}
+
+class HistoriquePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Historique des dépenses'));
+  }
+}
