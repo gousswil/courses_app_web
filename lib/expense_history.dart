@@ -16,6 +16,8 @@ class ExpenseHistoryPage extends StatelessWidget {
         .map((e) => json.decode(e) as Map<String, dynamic>)
         .toList();
 
+    print('Dépenses trouvées : $expenses');
+
     return Scaffold(
       appBar: AppBar(title: const Text('Historique des dépenses')),
       body: expenses.isEmpty
@@ -24,7 +26,7 @@ class ExpenseHistoryPage extends StatelessWidget {
               itemCount: expenses.length,
               itemBuilder: (context, index) {
                 final expense = expenses[index];
-                final date = DateTime.parse(expense['date']);
+                final date = DateTime.tryParse(expense['date'] ?? '') ?? DateTime.now();
                 return ListTile(
                   leading: const Icon(Icons.receipt_long),
                   title: Text('${expense['amount']} € - ${expense['category']}'),
