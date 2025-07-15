@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'expense_form.dart'; // Assure-toi que ce fichier existe
+import 'expense_history.dart'; 
 
 void main() => runApp(CoursesApp());
 
@@ -30,7 +31,7 @@ class _HomePageState extends State<HomePage> {
 
   static final List<Widget> _pages = <Widget>[
     AccueilPage(),
-    HistoriquePage(), // À créer si ce n’est pas encore fait
+    ExpenseHistoryPage(), // À créer si ce n’est pas encore fait
     ExpenseForm(),     // Le formulaire d'ajout
   ];
 
@@ -67,7 +68,7 @@ class AccueilPage extends StatelessWidget {
   }
 }
 
-class HistoriquePage extends StatelessWidget {
+class ExpenseHistoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(child: Text('Historique des dépenses'));
