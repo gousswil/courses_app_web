@@ -68,9 +68,3 @@ class AccueilPage extends StatelessWidget {
   }
 }
 
-class ExpenseHistoryPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text('Historique des dépenses'));
-  }
-}
