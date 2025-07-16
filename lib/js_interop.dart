@@ -2,4 +2,4 @@
 @JS('extractTextFromImage')
 external void extractTextFromImage(String base64Image, String callbackId);
 
-import 'package:js/js.dart';
+//import 'package:js/js.dart';
