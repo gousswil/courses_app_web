@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:html' as html;
 import 'dart:convert';
-import 'package:js/js.dart';
+import 'dart:js' as js;
 import 'js_interop.dart';
-
 
 class ExpenseForm extends StatefulWidget {
   const ExpenseForm({super.key});
@@ -17,51 +16,6 @@ class _ExpenseFormState extends State<ExpenseForm> {
   String _selectedCategory = 'Alimentaire';
   DateTime _selectedDate = DateTime.now();
 
-      void _uploadAndScanImage() {
-        final uploadInput = html.FileUploadInputElement();
-        uploadInput.accept = 'image/*';
-        uploadInput.click();
-
-        uploadInput.onChange.listen((event) {
-          final file = uploadInput.files?.first;
-          if (file == null) return;
-
-          final reader = html.FileReader();
-          reader.readAsDataUrl(file);
-
-          reader.onLoadEnd.listen((event) {
-            final base64Image = (reader.result as String).split(',').last;
-
-            final callbackId = 'ocr_callback_${DateTime.now().millisecondsSinceEpoch}';
-
-            html.window.addEventListener(callbackId, allowInterop((e) {
-              final customEvent = e as html.CustomEvent;
-              final text = customEvent.detail as String;
-
-              print('Texte OCR détecté : $text');
-
-              // Exemple : recherche du montant dans le texte
-              final regex = RegExp(r'(\d+[\.,]?\d{0,2}) ?€');
-              final match = regex.firstMatch(text);
-              if (match != null) {
-                final montant = match.group(1)?.replaceAll(',', '.');
-                setState(() {
-                  _amountController.text = montant ?? '';
-                });
-              }
-
-              // Nettoyage de l'écouteur
-              html.window.removeEventListener(callbackId, null);
-            }));
-
-            // Appel JS
-            extractTextFromImage(base64Image, callbackId);
-          });
-        });
-      }
-
-
-//Fonction _scanTicketAndFillForm
   void _scanTicketAndFillForm() async {
     try {
       final jsPromise = js.context.callMethod('recognizeFromFile');
@@ -80,12 +34,11 @@ class _ExpenseFormState extends State<ExpenseForm> {
 
       // 📅 Extraction de la date
       final dateRegex = RegExp(
-          r'(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})'); // ex : 15/07/2025
+          r'(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}|\d{4}[\/\-\.]\d{2}[\/\-\.]\d{2})');
       final dateMatch = dateRegex.firstMatch(ocrText);
       DateTime? parsedDate;
       if (dateMatch != null) {
-        final dateStr = dateMatch.group(0)!;
-        parsedDate = _parseDate(dateStr);
+        parsedDate = _parseDate(dateMatch.group(0)!);
       }
 
       // 🧠 Catégorie basée sur les mots-clés
@@ -93,17 +46,20 @@ class _ExpenseFormState extends State<ExpenseForm> {
       String cat = 'Autre';
       if (lower.contains('carrefour') ||
           lower.contains('intermarché') ||
-          lower.contains('boulangerie') ||
+          lower.contains('auchan') ||
           lower.contains('super u') ||
+          lower.contains('boulangerie') ||
           lower.contains('aliment')) {
         cat = 'Alimentaire';
-      } else if (lower.contains('bus') ||
-          lower.contains('sncf') ||
+      } else if (lower.contains('sncf') ||
+          lower.contains('bus') ||
+          lower.contains('taxi') ||
           lower.contains('uber') ||
           lower.contains('transport')) {
         cat = 'Transport';
       } else if (lower.contains('pharmacie') ||
           lower.contains('shampoo') ||
+          lower.contains('dentifrice') ||
           lower.contains('gel douche') ||
           lower.contains('hygiène')) {
         cat = 'Hygiène';
@@ -115,9 +71,15 @@ class _ExpenseFormState extends State<ExpenseForm> {
         if (parsedDate != null) _selectedDate = parsedDate;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Informations extraites avec succès')),
-      );
+      if (montant.isEmpty && parsedDate == null && cat == 'Autre') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Aucune information détectée.')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Informations extraites avec succès')),
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Erreur OCR : $e")),
@@ -130,15 +92,19 @@ class _ExpenseFormState extends State<ExpenseForm> {
       final cleaned = input.replaceAll(RegExp(r'[^0-9\/\-\.]'), '');
       final parts = cleaned.split(RegExp(r'[\/\-\.]'));
       if (parts.length == 3) {
-        final d = int.parse(parts[0]);
-        final m = int.parse(parts[1]);
-        final y = int.parse(parts[2].length == 2 ? '20${parts[2]}' : parts[2]);
-        return DateTime(y, m, d);
+        if (parts[0].length == 4) {
+          return DateTime(
+              int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+        } else {
+          final d = int.parse(parts[0]);
+          final m = int.parse(parts[1]);
+          final y = int.parse(parts[2].length == 2 ? '20${parts[2]}' : parts[2]);
+          return DateTime(y, m, d);
+        }
       }
     } catch (_) {}
     return null;
   }
-
 
   void _saveExpense() {
     final amount = _amountController.text;
@@ -192,14 +158,11 @@ class _ExpenseFormState extends State<ExpenseForm> {
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            
             ElevatedButton.icon(
               onPressed: _scanTicketAndFillForm,
-              icon: Icon(Icons.photo_camera),
-              label: Text('Scanner un ticket'),
+              icon: const Icon(Icons.photo_camera),
+              label: const Text('Scanner un ticket'),
             ),
-
-            
             TextField(
               controller: _amountController,
               keyboardType: TextInputType.number,
@@ -232,7 +195,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                 ),
               ],
             ),
-            const Spacer(),
+            const SizedBox(height: 32),
             ElevatedButton(
               onPressed: _saveExpense,
               child: const Text('Ajouter la dépense'),

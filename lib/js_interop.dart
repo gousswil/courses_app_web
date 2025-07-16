@@ -1,5 +1,11 @@
-import 'package:js/js.dart';
-// lib/js_interop.dart
-@JS('extractTextFromImage')
-external void extractTextFromImage(String base64Image, String callbackId);
+@JS()
+library js_interop;
 
+import 'package:js/js.dart';
+import 'dart:js_util';
+
+@JS('recognizeFromFile')
+external dynamic recognizeFromFile();
+
+Future<T> jsPromiseToFuture<T>(dynamic jsPromise) =>
+    promiseToFuture<T>(jsPromise);
