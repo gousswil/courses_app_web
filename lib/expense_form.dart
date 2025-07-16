@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:html' as html;
 import 'dart:convert';
 import 'package:js/js.dart';
+import 'js_interop.dart';
+
 
 class ExpenseForm extends StatefulWidget {
   const ExpenseForm({super.key});
@@ -16,46 +18,48 @@ class _ExpenseFormState extends State<ExpenseForm> {
   DateTime _selectedDate = DateTime.now();
 
       void _uploadAndScanImage() {
-      final input = html.FileUploadInputElement();
-      input.accept = 'image/*';
-      input.click();
+        final uploadInput = html.FileUploadInputElement();
+        uploadInput.accept = 'image/*';
+        uploadInput.click();
 
-      input.onChange.listen((e) {
-        final file = input.files!.first;
-        final reader = html.FileReader();
-        reader.readAsDataUrl(file);
+        uploadInput.onChange.listen((event) {
+          final file = uploadInput.files?.first;
+          if (file == null) return;
 
-        reader.onLoadEnd.listen((event) {
-          final base64Image = reader.result as String;
+          final reader = html.FileReader();
+          reader.readAsDataUrl(file);
 
-          final callbackId = DateTime.now().millisecondsSinceEpoch;
-          html.window.addEventListener('ocrResult-$callbackId', (event) {
-            final text = (event as html.CustomEvent).detail as String;
-            print('Texte OCR : $text');
+          reader.onLoadEnd.listen((event) {
+            final base64Image = (reader.result as String).split(',').last;
 
-            // 🔥 Auto-remplissage si on détecte un montant
-            final reg = RegExp(r'(\d+[,\.]?\d{0,2}) ?€');
-            final match = reg.firstMatch(text);
-            if (match != null) {
-              setState(() {
-                _amountController.text = match.group(1)!.replaceAll(',', '.');
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Montant détecté : ${match.group(0)}')),
-              );
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Aucun montant détecté')),
-              );
-            }
+            final callbackId = 'ocr_callback_${DateTime.now().millisecondsSinceEpoch}';
+
+            html.window.addEventListener(callbackId, allowInterop((e) {
+              final customEvent = e as html.CustomEvent;
+              final text = customEvent.detail as String;
+
+              print('Texte OCR détecté : $text');
+
+              // Exemple : recherche du montant dans le texte
+              final regex = RegExp(r'(\d+[\.,]?\d{0,2}) ?€');
+              final match = regex.firstMatch(text);
+              if (match != null) {
+                final montant = match.group(1)?.replaceAll(',', '.');
+                setState(() {
+                  _amountController.text = montant ?? '';
+                });
+              }
+
+              // Nettoyage de l'écouteur
+              html.window.removeEventListener(callbackId, null);
+            }));
+
+            // Appel JS
+            extractTextFromImage(base64Image, callbackId);
           });
-
-          // Appel à la fonction JS
-          //html.window.callMethod('extractTextFromImage', [base64Image, callbackId]);
-          extractTextFromImage(base64Image, callbackId);
         });
-      });
-    }
+      }
+
 
 
   void _saveExpense() {
