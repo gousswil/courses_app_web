@@ -14,23 +14,47 @@ class _ExpenseFormState extends State<ExpenseForm> {
   String _selectedCategory = 'Alimentaire';
   DateTime _selectedDate = DateTime.now();
 
-    void _uploadAndScanImage() {
-      html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
-      uploadInput.accept = 'image/*';
-      uploadInput.click();
+      void _uploadAndScanImage() {
+      final input = html.FileUploadInputElement();
+      input.accept = 'image/*';
+      input.click();
 
-      uploadInput.onChange.listen((e) {
-        final file = uploadInput.files!.first;
+      input.onChange.listen((e) {
+        final file = input.files!.first;
         final reader = html.FileReader();
         reader.readAsDataUrl(file);
 
-        reader.onLoadEnd.listen((e) {
-          final encoded = reader.result as String;
-          // À l'étape suivante : envoyer cette image à l'OCR
-          print('Image encodée : $encoded');
+        reader.onLoadEnd.listen((event) {
+          final base64Image = reader.result as String;
+
+          final callbackId = DateTime.now().millisecondsSinceEpoch;
+          html.window.addEventListener('ocrResult-$callbackId', (event) {
+            final text = (event as html.CustomEvent).detail as String;
+            print('Texte OCR : $text');
+
+            // 🔥 Auto-remplissage si on détecte un montant
+            final reg = RegExp(r'(\d+[,\.]?\d{0,2}) ?€');
+            final match = reg.firstMatch(text);
+            if (match != null) {
+              setState(() {
+                _amountController.text = match.group(1)!.replaceAll(',', '.');
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Montant détecté : ${match.group(0)}')),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Aucun montant détecté')),
+              );
+            }
+          });
+
+          // Appel à la fonction JS
+          html.context.callMethod('extractTextFromImage', [base64Image, callbackId]);
         });
       });
     }
+
 
   void _saveExpense() {
     final amount = _amountController.text;
