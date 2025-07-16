@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'expense_form.dart'; // Assure-toi que ce fichier existe
 import 'expense_history.dart'; 
+import 'ocr_scan.dart'; 
 
 void main() => runApp(CoursesApp());
 
@@ -33,6 +34,7 @@ class _HomePageState extends State<HomePage> {
     AccueilPage(),
     ExpenseHistoryPage(), // À créer si ce n’est pas encore fait
     ExpenseForm(),     // Le formulaire d'ajout
+    OcrScanPage(),
   ];
 
   void _onItemTapped(int index) {

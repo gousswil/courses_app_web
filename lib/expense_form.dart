@@ -14,6 +14,24 @@ class _ExpenseFormState extends State<ExpenseForm> {
   String _selectedCategory = 'Alimentaire';
   DateTime _selectedDate = DateTime.now();
 
+    void _uploadAndScanImage() {
+      html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
+      uploadInput.accept = 'image/*';
+      uploadInput.click();
+
+      uploadInput.onChange.listen((e) {
+        final file = uploadInput.files!.first;
+        final reader = html.FileReader();
+        reader.readAsDataUrl(file);
+
+        reader.onLoadEnd.listen((e) {
+          final encoded = reader.result as String;
+          // À l'étape suivante : envoyer cette image à l'OCR
+          print('Image encodée : $encoded');
+        });
+      });
+    }
+
   void _saveExpense() {
     final amount = _amountController.text;
     if (amount.isEmpty) return;
@@ -66,6 +84,14 @@ class _ExpenseFormState extends State<ExpenseForm> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            
+            ElevatedButton.icon(
+              onPressed: _uploadAndScanImage,
+              icon: Icon(Icons.photo_camera),
+              label: Text('Scanner un ticket'),
+            ),
+
+            
             TextField(
               controller: _amountController,
               keyboardType: TextInputType.number,
