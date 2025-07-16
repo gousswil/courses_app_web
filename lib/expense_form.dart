@@ -50,7 +50,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
           });
 
           // Appel à la fonction JS
-          html.context.callMethod('extractTextFromImage', [base64Image, callbackId]);
+          html.window.callMethod('extractTextFromImage', [base64Image, callbackId]);
         });
       });
     }
