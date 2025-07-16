@@ -8,8 +8,8 @@ window.extractTextFromImage = async function (base64Image, callbackId) {
     logger: m => console.log(m) // optionnel
   });
 
-  await worker.loadLanguage('fra');
-  await worker.initialize('fra');
+  await worker.loadLanguage('fra+eng');
+  await worker.initialize('fra+eng');
 
   const result = await worker.recognize(base64Image);
   const text = result.data.text;
