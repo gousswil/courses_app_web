@@ -82,7 +82,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
       appBar: AppBar(title: const Text('Ajouter une dépense')),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
+        child: ListView(
           children: [
             
             ElevatedButton.icon(
