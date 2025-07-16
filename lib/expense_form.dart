@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:html' as html;
 import 'dart:convert';
+import 'package:js/js.dart';
 
 class ExpenseForm extends StatefulWidget {
   const ExpenseForm({super.key});
@@ -50,7 +51,8 @@ class _ExpenseFormState extends State<ExpenseForm> {
           });
 
           // Appel à la fonction JS
-          html.window.callMethod('extractTextFromImage', [base64Image, callbackId]);
+          //html.window.callMethod('extractTextFromImage', [base64Image, callbackId]);
+          extractTextFromImage(base64Image, callbackId);
         });
       });
     }
