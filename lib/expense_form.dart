@@ -85,7 +85,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
           });
         });
       }
-
+/* 
       void _scanTicketAndFillForm() async {
       try {
         final jsPromise = recognizeFromFile(); // <-- Appel JS
@@ -151,7 +151,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
           SnackBar(content: Text('Erreur OCR : $e')),
         );
       }
-    }
+    } */
 
 
   DateTime? _parseDate(String input) {
