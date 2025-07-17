@@ -16,76 +16,73 @@ class _ExpenseFormState extends State<ExpenseForm> {
   String _selectedCategory = 'Alimentaire';
   DateTime _selectedDate = DateTime.now();
 
-  void _scanTicketAndFillForm() async {
-    try {
-      final jsPromise = js.context.callMethod('recognizeFromFile');
-      final ocrText = await jsPromiseToFuture<String>(jsPromise);
+      void _scanTicketAndFillForm() async {
+      try {
+        final jsPromise = recognizeFromFile(); // <-- Appel JS
+        final String? ocrText = await jsPromiseToFuture<String?>(jsPromise);
 
-      // 🧾 Extraction du montant (plus grand montant détecté)
-      final montantRegex = RegExp(r'(\d{1,4}[.,]\d{2})');
-      final allMatches = montantRegex.allMatches(ocrText);
-      final montants = allMatches
-          .map((m) => m.group(0)!.replaceAll(',', '.'))
-          .map((s) => double.tryParse(s) ?? 0)
-          .where((n) => n > 0)
-          .toList();
-      montants.sort();
-      final montant = montants.isNotEmpty ? montants.last.toStringAsFixed(2) : '';
+        if (ocrText == null || ocrText.trim().isEmpty) {
+          throw 'Aucun texte détecté';
+        }
 
-      // 📅 Extraction de la date
-      final dateRegex = RegExp(
-          r'(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}|\d{4}[\/\-\.]\d{2}[\/\-\.]\d{2})');
-      final dateMatch = dateRegex.firstMatch(ocrText);
-      DateTime? parsedDate;
-      if (dateMatch != null) {
-        parsedDate = _parseDate(dateMatch.group(0)!);
-      }
+        // 🧾 Extraction du montant (plus grand montant détecté)
+        final montantRegex = RegExp(r'(\d{1,4}[.,]\d{2})');
+        final allMatches = montantRegex.allMatches(ocrText);
+        final montants = allMatches
+            .map((m) => m.group(0)?.replaceAll(',', '.'))
+            .where((s) => s != null)
+            .map((s) => double.tryParse(s!) ?? 0)
+            .where((n) => n > 0)
+            .toList();
+        montants.sort();
+        final montant = montants.isNotEmpty ? montants.last.toStringAsFixed(2) : '';
 
-      // 🧠 Catégorie basée sur les mots-clés
-      final lower = ocrText.toLowerCase();
-      String cat = 'Autre';
-      if (lower.contains('carrefour') ||
-          lower.contains('intermarché') ||
-          lower.contains('auchan') ||
-          lower.contains('super u') ||
-          lower.contains('boulangerie') ||
-          lower.contains('aliment')) {
-        cat = 'Alimentaire';
-      } else if (lower.contains('sncf') ||
-          lower.contains('bus') ||
-          lower.contains('taxi') ||
-          lower.contains('uber') ||
-          lower.contains('transport')) {
-        cat = 'Transport';
-      } else if (lower.contains('pharmacie') ||
-          lower.contains('shampoo') ||
-          lower.contains('dentifrice') ||
-          lower.contains('gel douche') ||
-          lower.contains('hygiène')) {
-        cat = 'Hygiène';
-      }
+        // 📅 Extraction de la date
+        final dateRegex = RegExp(r'(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})');
+        final dateMatch = dateRegex.firstMatch(ocrText);
+        DateTime? parsedDate;
+        if (dateMatch != null) {
+          final dateStr = dateMatch.group(0)!;
+          parsedDate = _parseDate(dateStr);
+        }
 
-      setState(() {
-        if (montant.isNotEmpty) _amountController.text = montant;
-        _selectedCategory = cat;
-        if (parsedDate != null) _selectedDate = parsedDate;
-      });
+        // 🧠 Détection de la catégorie
+        final lower = ocrText.toLowerCase();
+        String cat = 'Autre';
+        if (lower.contains('carrefour') ||
+            lower.contains('intermarché') ||
+            lower.contains('boulangerie') ||
+            lower.contains('super u') ||
+            lower.contains('aliment')) {
+          cat = 'Alimentaire';
+        } else if (lower.contains('bus') ||
+            lower.contains('sncf') ||
+            lower.contains('uber') ||
+            lower.contains('transport')) {
+          cat = 'Transport';
+        } else if (lower.contains('pharmacie') ||
+            lower.contains('shampoo') ||
+            lower.contains('gel douche') ||
+            lower.contains('hygiène')) {
+          cat = 'Hygiène';
+        }
 
-      if (montant.isEmpty && parsedDate == null && cat == 'Autre') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Aucune information détectée.')),
-        );
-      } else {
+        setState(() {
+          if (montant.isNotEmpty) _amountController.text = montant;
+          _selectedCategory = cat;
+          if (parsedDate != null) _selectedDate = parsedDate;
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Informations extraites avec succès')),
         );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur OCR : $e')),
+        );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erreur OCR : $e")),
-      );
     }
-  }
+
 
   DateTime? _parseDate(String input) {
     try {
