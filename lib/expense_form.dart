@@ -17,7 +17,14 @@ class _ExpenseFormState extends State<ExpenseForm> {
   final _amountController = TextEditingController();
   String _selectedCategory = 'Alimentaire';
   DateTime _selectedDate = DateTime.now();
+  final TextEditingController _dateController = TextEditingController();
 
+      @override
+        void dispose() {
+          _amountController.dispose();
+          _dateController.dispose();
+          super.dispose();
+        }
 
       void _uploadAndScanImage() {
         final uploadInput = html.FileUploadInputElement();
@@ -44,37 +51,49 @@ class _ExpenseFormState extends State<ExpenseForm> {
               final text = customEvent.detail as String;
               print('Texte OCR détecté : $text');
               // Analyse du texte OCR
-              final montantRegex = RegExp(r'(\d{1,4}[.,]\d{2})');
-              final allMatches = montantRegex.allMatches(text);
-              final montants = allMatches
-                  .map((m) => m.group(0)!.replaceAll(',', '.'))
-                  .map((s) => double.tryParse(s) ?? 0)
-                  .where((n) => n > 0)
-                  .toList();
-              montants.sort();
-              final montant = montants.isNotEmpty ? montants.last.toStringAsFixed(2) : '';
+              String? montant;
+              String? date;
+              String? categorie;
 
-              final dateRegex = RegExp(r'(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})');
-              final dateMatch = dateRegex.firstMatch(text);
-              DateTime? parsedDate;
+              // 1. Montant total (recherche du plus grand montant décimal)
+              final montantRegExp = RegExp(r'(\d+[.,]\d{2})');
+              final allMontants = montantRegExp.allMatches(text).map((m) {
+                return double.tryParse(m.group(1)!.replaceAll(',', '.')) ?? 0.0;
+              }).toList();
+
+              if (allMontants.isNotEmpty) {
+                final plusGrand = allMontants.reduce((a, b) => a > b ? a : b);
+                montant = plusGrand.toStringAsFixed(2);
+              }
+
+              // 2. Date au format DD/MM/YYYY ou similaire
+              final dateRegExp = RegExp(r'(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})');
+              final dateMatch = dateRegExp.firstMatch(text);
               if (dateMatch != null) {
-                parsedDate = _parseDate(dateMatch.group(0)!);
+                date = dateMatch.group(1);
               }
 
-              final lower = text.toLowerCase();
-              String cat = 'Autre';
-              if (lower.contains('carrefour') || lower.contains('aliment')) {
-                cat = 'Alimentaire';
-              } else if (lower.contains('sncf') || lower.contains('uber')) {
-                cat = 'Transport';
-              } else if (lower.contains('pharmacie')) {
-                cat = 'Hygiène';
+              // 3. Catégorie simple (par mots-clés)
+              if (text.toLowerCase().contains('supermarché') || text.toLowerCase().contains('carrefour') || text.toLowerCase().contains('intermarché')) {
+                categorie = 'Alimentation';
+              } else if (text.toLowerCase().contains('station') || text.toLowerCase().contains('essence')) {
+                categorie = 'Transport';
+              } else if (text.toLowerCase().contains('pharmacie')) {
+                categorie = 'Santé';
+              } else {
+                categorie = 'Autre';
               }
-
-              setState(() {
-                if (montant.isNotEmpty) _amountController.text = montant;
-                _selectedCategory = cat;
-                if (parsedDate != null) _selectedDate = parsedDate;
+             setState(() {
+                if (montant != null) _amountController.text = montant!;
+                if (date != null) {
+                    final parsedDate = DateTime.tryParse(date!);
+                    if (parsedDate != null) {
+                      setState(() {
+                        _selectedDate = parsedDate;
+                      });
+                    }
+                  }
+                if (categorie != null) _selectedCategory = categorie!;
               });
 
               ScaffoldMessenger.of(context).showSnackBar(
