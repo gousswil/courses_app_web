@@ -46,6 +46,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
 
             print('Écoute du callback : ocrResult-$callbackId');
               html.window.addEventListener(callbackId, allowInterop((e) {
+                print('On entre dans allowInterop');
               final customEvent = e as html.CustomEvent;
               final text = customEvent.detail as String;
               print(' Texte OCR détecté : $text');
