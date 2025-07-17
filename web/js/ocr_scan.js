@@ -18,7 +18,7 @@ window.extractTextFromImage = async function (base64Image, callbackId) {
   await worker.terminate();
 
   // On appelle le callback Flutter
-  window.dispatchEvent(new CustomEvent('ocrResult-$callbackId', {
+  window.dispatchEvent(new CustomEvent(`ocrResult-${callbackId}`, {
     detail: text
   }));
 }
