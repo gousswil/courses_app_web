@@ -3,6 +3,8 @@ import 'dart:html' as html;
 import 'dart:convert';
 import 'dart:js' as js;
 import 'js_interop.dart';
+import 'package:js/js_util.dart' show allowInterop;
+
 
 class ExpenseForm extends StatefulWidget {
   const ExpenseForm({super.key});
@@ -15,6 +17,74 @@ class _ExpenseFormState extends State<ExpenseForm> {
   final _amountController = TextEditingController();
   String _selectedCategory = 'Alimentaire';
   DateTime _selectedDate = DateTime.now();
+
+
+      void _uploadAndScanImage() {
+        final uploadInput = html.FileUploadInputElement();
+        uploadInput.accept = 'image/*';
+        uploadInput.click();
+
+        uploadInput.onChange.listen((event) {
+          final file = uploadInput.files?.first;
+          if (file == null) return;
+
+          final reader = html.FileReader();
+          reader.readAsDataUrl(file);
+
+          reader.onLoadEnd.listen((event) {
+            final base64Image = (reader.result as String).split(',').last;
+            final callbackId = 'ocr_callback_${DateTime.now().millisecondsSinceEpoch}';
+
+            html.window.addEventListener(callbackId, allowInterop((e) {
+              final customEvent = e as html.CustomEvent;
+              final text = customEvent.detail as String;
+
+              // Analyse du texte OCR
+              final montantRegex = RegExp(r'(\d{1,4}[.,]\d{2})');
+              final allMatches = montantRegex.allMatches(text);
+              final montants = allMatches
+                  .map((m) => m.group(0)!.replaceAll(',', '.'))
+                  .map((s) => double.tryParse(s) ?? 0)
+                  .where((n) => n > 0)
+                  .toList();
+              montants.sort();
+              final montant = montants.isNotEmpty ? montants.last.toStringAsFixed(2) : '';
+
+              final dateRegex = RegExp(r'(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})');
+              final dateMatch = dateRegex.firstMatch(text);
+              DateTime? parsedDate;
+              if (dateMatch != null) {
+                parsedDate = _parseDate(dateMatch.group(0)!);
+              }
+
+              final lower = text.toLowerCase();
+              String cat = 'Autre';
+              if (lower.contains('carrefour') || lower.contains('aliment')) {
+                cat = 'Alimentaire';
+              } else if (lower.contains('sncf') || lower.contains('uber')) {
+                cat = 'Transport';
+              } else if (lower.contains('pharmacie')) {
+                cat = 'Hygiène';
+              }
+
+              setState(() {
+                if (montant.isNotEmpty) _amountController.text = montant;
+                _selectedCategory = cat;
+                if (parsedDate != null) _selectedDate = parsedDate;
+              });
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Informations extraites avec succès')),
+              );
+
+              html.window.removeEventListener(callbackId, null);
+            }));
+
+            js.context.callMethod('extractTextFromImage', [base64Image, callbackId]);
+
+          });
+        });
+      }
 
       void _scanTicketAndFillForm() async {
       try {
@@ -156,7 +226,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
         child: ListView(
           children: [
             ElevatedButton.icon(
-              onPressed: _scanTicketAndFillForm,
+              onPressed: _uploadAndScanImage,
               icon: const Icon(Icons.photo_camera),
               label: const Text('Scanner un ticket'),
             ),
