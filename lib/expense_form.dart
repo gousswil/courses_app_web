@@ -34,13 +34,15 @@ class _ExpenseFormState extends State<ExpenseForm> {
           reader.onLoadEnd.listen((event) {
 
             final base64Image = reader.result as String; // garde toute la chaîne avec le header
-            
+
             final callbackId = 'ocr_callback_${DateTime.now().millisecondsSinceEpoch}';
+
+            print('Écoute du callback : ocrResult-$callbackId');
 
             html.window.addEventListener(callbackId, allowInterop((e) {
               final customEvent = e as html.CustomEvent;
               final text = customEvent.detail as String;
-
+              print('Texte OCR détecté : $text');
               // Analyse du texte OCR
               final montantRegex = RegExp(r'(\d{1,4}[.,]\d{2})');
               final allMatches = montantRegex.allMatches(text);

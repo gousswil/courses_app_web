@@ -18,6 +18,8 @@ window.extractTextFromImage = async function (base64Image, callbackId) {
   await worker.terminate();
 
   // On appelle le callback Flutter
+  console.log("Envoi du CustomEvent vers Flutter :", `ocrResult-${callbackId}`, text);
+
   window.dispatchEvent(new CustomEvent(`ocrResult-${callbackId}`, {
     detail: text
   }));
