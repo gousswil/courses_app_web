@@ -2,6 +2,7 @@
 // <script src="https://unpkg.com/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
 
 window.extractTextFromImage = async function (base64Image, callbackId) {
+  console.log("Base64 reçu dans JS :", base64Image.slice(0, 50));
   const { createWorker } = Tesseract;
 
   const worker = await createWorker({
