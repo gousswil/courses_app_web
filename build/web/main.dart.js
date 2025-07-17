@@ -38505,7 +38505,7 @@ $.arK().DQ("extractTextFromImage",[r,q])},
 $S:279}
 A.ahf.prototype={
 $1(a){var s,r=A.bG(B.Dd.gafl(t.v_.a(a)))
-A.hV("\ud83e\uddfe Texte OCR d\xe9tect\xe9 : "+r)
+A.hV(" Texte OCR d\xe9tect\xe9 : "+r)
 this.a.ala(r)
 s=window
 s.toString

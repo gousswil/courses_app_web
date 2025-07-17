@@ -48,7 +48,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
               html.window.addEventListener(callbackId, allowInterop((e) {
               final customEvent = e as html.CustomEvent;
               final text = customEvent.detail as String;
-              print('🧾 Texte OCR détecté : $text');
+              print(' Texte OCR détecté : $text');
 
               updateFormFieldsFromOCR(text); // Appel de la fonction de traitement
 
@@ -80,7 +80,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
   }
 
 
-          void updateFormFieldsFromOCR(String recognizedText) {
+      void updateFormFieldsFromOCR(String recognizedText) {
             print("updateFormFieldsFromOCR appelé");
             print("Texte OCR brut : $recognizedText");
 
