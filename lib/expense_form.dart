@@ -32,7 +32,9 @@ class _ExpenseFormState extends State<ExpenseForm> {
           reader.readAsDataUrl(file);
 
           reader.onLoadEnd.listen((event) {
-            final base64Image = (reader.result as String).split(',').last;
+
+            final base64Image = reader.result as String; // garde toute la chaîne avec le header
+            
             final callbackId = 'ocr_callback_${DateTime.now().millisecondsSinceEpoch}';
 
             html.window.addEventListener(callbackId, allowInterop((e) {
