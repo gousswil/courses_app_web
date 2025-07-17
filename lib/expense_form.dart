@@ -45,137 +45,20 @@ class _ExpenseFormState extends State<ExpenseForm> {
             final callbackId = 'ocr_callback_${DateTime.now().millisecondsSinceEpoch}';
 
             print('Écoute du callback : ocrResult-$callbackId');
-
-            html.window.addEventListener(callbackId, allowInterop((e) {
+              html.window.addEventListener(callbackId, allowInterop((e) {
               final customEvent = e as html.CustomEvent;
               final text = customEvent.detail as String;
-              print('Texte OCR détecté : $text');
-              // Analyse du texte OCR
-              String? montant;
-              String? date;
-              String? categorie;
+              print('🧾 Texte OCR détecté : $text');
 
-              // 1. Montant total (recherche du plus grand montant décimal)
-              final montantRegExp = RegExp(r'(\d+[.,]\d{2})');
-              final allMontants = montantRegExp.allMatches(text).map((m) {
-                return double.tryParse(m.group(1)!.replaceAll(',', '.')) ?? 0.0;
-              }).toList();
+              updateFormFieldsFromOCR(text); // Appel de la fonction de traitement
 
-              if (allMontants.isNotEmpty) {
-                final plusGrand = allMontants.reduce((a, b) => a > b ? a : b);
-                montant = plusGrand.toStringAsFixed(2);
-              }
-
-              // 2. Date au format DD/MM/YYYY ou similaire
-              final dateRegExp = RegExp(r'(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})');
-              final dateMatch = dateRegExp.firstMatch(text);
-              if (dateMatch != null) {
-                date = dateMatch.group(1);
-              }
-
-              // 3. Catégorie simple (par mots-clés)
-              if (text.toLowerCase().contains('supermarché') || text.toLowerCase().contains('carrefour') || text.toLowerCase().contains('intermarché')) {
-                categorie = 'Alimentation';
-              } else if (text.toLowerCase().contains('station') || text.toLowerCase().contains('essence')) {
-                categorie = 'Transport';
-              } else if (text.toLowerCase().contains('pharmacie')) {
-                categorie = 'Santé';
-              } else {
-                categorie = 'Autre';
-              }
-             setState(() {
-                if (montant != null) _amountController.text = montant!;
-                if (date != null) {
-                    final parsedDate = DateTime.tryParse(date!);
-                    if (parsedDate != null) {
-                      setState(() {
-                        _selectedDate = parsedDate;
-                      });
-                    }
-                  }
-                if (categorie != null) _selectedCategory = categorie!;
-              });
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Informations extraites avec succès')),
-              );
-
-              html.window.removeEventListener(callbackId, null);
+              html.window.removeEventListener(callbackId, null); // Nettoyage
             }));
-
             js.context.callMethod('extractTextFromImage', [base64Image, callbackId]);
 
           });
         });
       }
-/* 
-      void _scanTicketAndFillForm() async {
-      try {
-        final jsPromise = recognizeFromFile(); // <-- Appel JS
-        final String? ocrText = await jsPromiseToFuture<String?>(jsPromise);
-
-        if (ocrText == null || ocrText.trim().isEmpty) {
-          throw 'Aucun texte détecté';
-        }
-
-        // 🧾 Extraction du montant (plus grand montant détecté)
-        final montantRegex = RegExp(r'(\d{1,4}[.,]\d{2})');
-        final allMatches = montantRegex.allMatches(ocrText);
-        final montants = allMatches
-            .map((m) => m.group(0)?.replaceAll(',', '.'))
-            .where((s) => s != null)
-            .map((s) => double.tryParse(s!) ?? 0)
-            .where((n) => n > 0)
-            .toList();
-        montants.sort();
-        final montant = montants.isNotEmpty ? montants.last.toStringAsFixed(2) : '';
-
-        // 📅 Extraction de la date
-        final dateRegex = RegExp(r'(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})');
-        final dateMatch = dateRegex.firstMatch(ocrText);
-        DateTime? parsedDate;
-        if (dateMatch != null) {
-          final dateStr = dateMatch.group(0)!;
-          parsedDate = _parseDate(dateStr);
-        }
-
-        // 🧠 Détection de la catégorie
-        final lower = ocrText.toLowerCase();
-        String cat = 'Autre';
-        if (lower.contains('carrefour') ||
-            lower.contains('intermarché') ||
-            lower.contains('boulangerie') ||
-            lower.contains('super u') ||
-            lower.contains('aliment')) {
-          cat = 'Alimentaire';
-        } else if (lower.contains('bus') ||
-            lower.contains('sncf') ||
-            lower.contains('uber') ||
-            lower.contains('transport')) {
-          cat = 'Transport';
-        } else if (lower.contains('pharmacie') ||
-            lower.contains('shampoo') ||
-            lower.contains('gel douche') ||
-            lower.contains('hygiène')) {
-          cat = 'Hygiène';
-        }
-
-        setState(() {
-          if (montant.isNotEmpty) _amountController.text = montant;
-          _selectedCategory = cat;
-          if (parsedDate != null) _selectedDate = parsedDate;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Informations extraites avec succès')),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur OCR : $e')),
-        );
-      }
-    } */
-
 
   DateTime? _parseDate(String input) {
     try {
@@ -195,6 +78,56 @@ class _ExpenseFormState extends State<ExpenseForm> {
     } catch (_) {}
     return null;
   }
+
+
+          void updateFormFieldsFromOCR(String recognizedText) {
+            print("updateFormFieldsFromOCR appelé");
+            print("Texte OCR brut : $recognizedText");
+
+            // Extraction du montant total
+            final montantRegExp = RegExp(r'(\d+[.,]?\d*)\s*(€|EUR)');
+            final montantMatch = montantRegExp.firstMatch(recognizedText);
+            final montant = montantMatch?.group(1)?.replaceAll(',', '.');
+
+            // Extraction de la date (format dd/MM/yyyy)
+            final dateRegExp = RegExp(r'(\d{2}/\d{2}/\d{4})');
+            final dateMatch = dateRegExp.firstMatch(recognizedText);
+            final dateString = dateMatch?.group(1);
+
+            // Détection simple de la catégorie
+            String? category;
+            final lowerText = recognizedText.toLowerCase();
+            if (lowerText.contains('carrefour') || lowerText.contains('super u') || lowerText.contains('intermarché')) {
+              category = 'Alimentaire';
+            } else if (lowerText.contains('bus') || lowerText.contains('taxi')) {
+              category = 'Transport';
+            } else if (lowerText.contains('shampooing') || lowerText.contains('gel douche')) {
+              category = 'Hygiène';
+            } else {
+              category = 'Autre';
+            }
+
+            // Mise à jour des champs du formulaire
+            setState(() {
+              if (montant != null) {
+                print("Montant détecté : $montant");
+                _amountController.text = montant;
+              }
+              if (category != null) {
+                print("Catégorie détectée : $category");
+                _selectedCategory = category;
+              }
+              if (dateString != null) {
+                final parsedDate = DateTime.tryParse(
+                  '${dateString.substring(6)}-${dateString.substring(3, 5)}-${dateString.substring(0, 2)}',
+                );
+                if (parsedDate != null) {
+                  print("Date détectée : $parsedDate");
+                  _selectedDate = parsedDate;
+                }
+              }
+            });
+          }
 
   void _saveExpense() {
     final amount = _amountController.text;
