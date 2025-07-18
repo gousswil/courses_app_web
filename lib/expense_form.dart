@@ -71,57 +71,87 @@ class _ExpenseFormState extends State<ExpenseForm> {
     });
   }
 
-        void updateFormFieldsFromOCR(String recognizedText) {
-            print("Texte OCR détecté : $recognizedText");
+       void updateFormFieldsFromOCR(String recognizedText) {
+          print("🧠 updateFormFieldsFromOCR appelé");
+          print("📝 Texte OCR reçu : $recognizedText");
 
-            // Date au format dd/mm/yyyy ou dd/mm/yy
-            final dateRegex = RegExp(r'(\d{2}/\d{2}/\d{2,4})');
-            final dateMatch = dateRegex.firstMatch(recognizedText);
-            if (dateMatch != null) {
-              final rawDate = dateMatch.group(0)!;
-              final parts = rawDate.split('/');
-              if (parts[2].length == 2) {
-                parts[2] = '20${parts[2]}';
-              }
-              final formattedDate = '${parts[2]}-${parts[1]}-${parts[0]}';
-              _dateController.text = formattedDate;
-              print("✅ Date détectée : $formattedDate");
-            } else {
-              print("❌ Aucune date détectée");
-            }
+          // 1. Extraction du montant (ex: 23,45 € ou 12.90 EUR)
+          final montantRegExp = RegExp(r'(\d{1,3}(?:[.,]\d{2}))\s*(€|eur)', caseSensitive: false);
+          final montantMatch = montantRegExp.firstMatch(recognizedText);
+          final montant = montantMatch?.group(1)?.replaceAll(',', '.');
 
-            // Montant avec symbole €
-            final montantRegex = RegExp(r'(\d+[.,]\d{2})\s?€');
-            final montantMatch = montantRegex.firstMatch(recognizedText);
-            if (montantMatch != null) {
-              final montantStr = montantMatch.group(1)!.replaceAll(',', '.');
-              _amountController.text = montantStr;
-              print("✅ Montant détecté : $montantStr");
-            } else {
-              // Fallback : plus grand chiffre avec virgule
-              final montantFallback = RegExp(r'\d+[.,]\d{2}').allMatches(recognizedText).map((m) {
-                final val = m.group(0)!.replaceAll(',', '.');
-                return double.tryParse(val) ?? 0.0;
-              }).fold<double>(0.0, (max, val) => val > max ? val : max);
-
-              if (montantFallback > 0) {
-                _amountController.text = montantFallback.toStringAsFixed(2);
-                print("✅ Montant fallback détecté : ${montantFallback.toStringAsFixed(2)}");
-              } else {
-                print("❌ Aucun montant détecté");
-              }
-            }
-
-            // Catégorie simple
-            final categories = ["alimentation", "loisir", "transport", "santé", "maison", "autre"];
-            final lowerText = recognizedText.toLowerCase();
-            final matchedCategory = categories.firstWhere(
-              (cat) => lowerText.contains(cat),
-              orElse: () => "Autre",
-            );
-            _categoryController.text = matchedCategory;
-            print("Catégorie détectée : $matchedCategory");
+          if (montant != null) {
+            print("💰 Montant détecté : $montant");
+            _amountController.text = montant;
+          } else {
+            print("❌ Aucun montant détecté");
           }
+
+          // 2. Extraction de la date (formats possibles : 12/07/2025, 12-07-2025, etc.)
+          final dateRegExp = RegExp(r'(\d{2}[\/\-.]\d{2}[\/\-.]\d{4})');
+          final dateMatch = dateRegExp.firstMatch(recognizedText);
+          final dateString = dateMatch?.group(1);
+
+          if (dateString != null) {
+            try {
+              final parts = dateString.split(RegExp(r'[\/\-.]'));
+              final parsedDate = DateTime(
+                int.parse(parts[2]),
+                int.parse(parts[1]),
+                int.parse(parts[0]),
+              );
+              _selectedDate = parsedDate;
+              print("📅 Date détectée : $_selectedDate");
+            } catch (e) {
+              print("⚠️ Erreur lors du parsing de la date : $e");
+            }
+          } else {
+            print("❌ Aucune date détectée");
+          }
+
+          // 3. Détection intelligente de la catégorie par mots-clés
+          final Map<String, String> keywordToCategory = {
+            'super u': 'Alimentation',
+            'carrefour': 'Alimentation',
+            'intermarché': 'Alimentation',
+            'monoprix': 'Alimentation',
+            'leclerc': 'Alimentation',
+            'picard': 'Alimentation',
+            'pharmacie': 'Santé',
+            'docteur': 'Santé',
+            'hopital': 'Santé',
+            'train': 'Transport',
+            'sncf': 'Transport',
+            'uber': 'Transport',
+            'essence': 'Transport',
+            'carburant': 'Transport',
+            'cinema': 'Loisir',
+            'netflix': 'Loisir',
+            'spotify': 'Loisir',
+            'fnac': 'Loisir',
+            'restaurant': 'Alimentation',
+            'mcdo': 'Alimentation',
+            'burger king': 'Alimentation',
+            'kfc': 'Alimentation',
+          };
+
+          String matchedCategory = 'Autre';
+          final textLower = recognizedText.toLowerCase();
+          for (final entry in keywordToCategory.entries) {
+            if (textLower.contains(entry.key)) {
+              matchedCategory = entry.value;
+              break;
+            }
+          }
+
+          _selectedCategory = matchedCategory;
+          print("🏷️ Catégorie détectée : $matchedCategory");
+
+          // Rafraîchir les champs avec setState
+          setState(() {});
+        }
+
+
 
 
   void _saveExpense() {
