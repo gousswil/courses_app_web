@@ -45,7 +45,8 @@ class _ExpenseFormState extends State<ExpenseForm> {
             final callbackId = 'ocr_callback_${DateTime.now().millisecondsSinceEpoch}';
 
             print('Écoute du callback : ocrResult-$callbackId');
-              html.window.addEventListener(callbackId, allowInterop((e) {
+            print('on devrait traiter le callback maintenant ');
+              html.window.addEventListener("ocrResult-$callbackId", allowInterop((e) {
                 print('On entre dans allowInterop');
               final customEvent = e as html.CustomEvent;
               final text = customEvent.detail as String;
