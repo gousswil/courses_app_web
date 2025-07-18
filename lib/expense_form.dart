@@ -16,13 +16,16 @@ class _ExpenseFormState extends State<ExpenseForm> {
   final _dateController = TextEditingController();
   String _selectedCategory = 'Alimentaire';
   DateTime _selectedDate = DateTime.now();
+  final TextEditingController _categoryController = TextEditingController();
 
-  @override
-  void dispose() {
-    _amountController.dispose();
-    _dateController.dispose();
-    super.dispose();
-  }
+
+    @override
+      void dispose() {
+        _amountController.dispose();
+        _dateController.dispose();
+        _categoryController.dispose();
+        super.dispose();
+      }
 
   void _uploadAndScanImage() {
     final uploadInput = html.FileUploadInputElement();
@@ -68,57 +71,58 @@ class _ExpenseFormState extends State<ExpenseForm> {
     });
   }
 
-  void updateFormFieldsFromOCR(String recognizedText) {
-    print("🧠 updateFormFieldsFromOCR appelé");
+        void updateFormFieldsFromOCR(String recognizedText) {
+            print("Texte OCR détecté : $recognizedText");
 
-    final montantRegExp = RegExp(r'(\d+[.,]?\d*)\s*(€|EUR)', caseSensitive: false);
-    final montantMatch = montantRegExp.firstMatch(recognizedText);
-    final montant = montantMatch?.group(1)?.replaceAll(',', '.');
+            // Date au format dd/mm/yyyy ou dd/mm/yy
+            final dateRegex = RegExp(r'(\d{2}/\d{2}/\d{2,4})');
+            final dateMatch = dateRegex.firstMatch(recognizedText);
+            if (dateMatch != null) {
+              final rawDate = dateMatch.group(0)!;
+              final parts = rawDate.split('/');
+              if (parts[2].length == 2) {
+                parts[2] = '20${parts[2]}';
+              }
+              final formattedDate = '${parts[2]}-${parts[1]}-${parts[0]}';
+              _dateController.text = formattedDate;
+              print("✅ Date détectée : $formattedDate");
+            } else {
+              print("❌ Aucune date détectée");
+            }
 
-    final dateRegExp = RegExp(r'(\d{2}/\d{2}/\d{4})');
-    final dateMatch = dateRegExp.firstMatch(recognizedText);
-    final dateString = dateMatch?.group(1);
+            // Montant avec symbole €
+            final montantRegex = RegExp(r'(\d+[.,]\d{2})\s?€');
+            final montantMatch = montantRegex.firstMatch(recognizedText);
+            if (montantMatch != null) {
+              final montantStr = montantMatch.group(1)!.replaceAll(',', '.');
+              _amountController.text = montantStr;
+              print("✅ Montant détecté : $montantStr");
+            } else {
+              // Fallback : plus grand chiffre avec virgule
+              final montantFallback = RegExp(r'\d+[.,]\d{2}').allMatches(recognizedText).map((m) {
+                final val = m.group(0)!.replaceAll(',', '.');
+                return double.tryParse(val) ?? 0.0;
+              }).fold<double>(0.0, (max, val) => val > max ? val : max);
 
-    String? category;
-    final lowerText = recognizedText.toLowerCase();
-    if (lowerText.contains('carrefour') || lowerText.contains('super u') || lowerText.contains('intermarché')) {
-      category = 'Alimentaire';
-    } else if (lowerText.contains('bus') || lowerText.contains('taxi') || lowerText.contains('essence')) {
-      category = 'Transport';
-    } else if (lowerText.contains('shampooing') || lowerText.contains('gel douche') || lowerText.contains('pharmacie')) {
-      category = 'Hygiène';
-    } else {
-      category = 'Autre';
-    }
+              if (montantFallback > 0) {
+                _amountController.text = montantFallback.toStringAsFixed(2);
+                print("✅ Montant fallback détecté : ${montantFallback.toStringAsFixed(2)}");
+              } else {
+                print("❌ Aucun montant détecté");
+              }
+            }
 
-    setState(() {
-      if (montant != null) {
-        print("💰 Montant détecté : $montant");
-        _amountController.text = montant;
-      }
-
-      if (category != null) {
-        print("🏷️ Catégorie détectée : $category");
-        _selectedCategory = category;
-      }
-
-      if (dateString != null) {
-        final parts = dateString.split('/');
-        if (parts.length == 3) {
-          final parsedDate = DateTime.tryParse('${parts[2]}-${parts[1]}-${parts[0]}');
-          if (parsedDate != null) {
-            print("📅 Date détectée : $parsedDate");
-            _selectedDate = parsedDate;
-            _dateController.text = '${parsedDate.day}/${parsedDate.month}/${parsedDate.year}';
+            // Catégorie simple
+            final categories = ["alimentation", "loisir", "transport", "santé", "maison", "autre"];
+            final lowerText = recognizedText.toLowerCase();
+            final matchedCategory = categories.firstWhere(
+              (cat) => lowerText.contains(cat),
+              orElse: () => "Autre",
+            );
+            _categoryController.text = matchedCategory;
+            print("Catégorie détectée : $matchedCategory");
           }
-        }
-      }
-    });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('✅ Informations extraites avec succès')),
-    );
-  }
 
   void _saveExpense() {
     final amount = _amountController.text;
