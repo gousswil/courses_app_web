@@ -14,19 +14,18 @@ class ExpenseForm extends StatefulWidget {
 class _ExpenseFormState extends State<ExpenseForm> {
   final _amountController = TextEditingController();
   final _dateController = TextEditingController();
+  final _categoryController = TextEditingController();
   String _selectedCategory = 'Alimentaire';
   DateTime _selectedDate = DateTime.now();
-  final TextEditingController _categoryController = TextEditingController();
   String? _ocrSummary;
 
-
-    @override
-      void dispose() {
-        _amountController.dispose();
-        _dateController.dispose();
-        _categoryController.dispose();
-        super.dispose();
-      }
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _dateController.dispose();
+    _categoryController.dispose();
+    super.dispose();
+  }
 
   void _uploadAndScanImage() {
     final uploadInput = html.FileUploadInputElement();
@@ -48,6 +47,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
         print('📡 Écoute du callback : $eventKey');
 
         html.EventListener? listener;
+
         listener = allowInterop((e) {
           print('✅ Callback reçu : $eventKey');
 
@@ -72,102 +72,94 @@ class _ExpenseFormState extends State<ExpenseForm> {
     });
   }
 
-       void updateFormFieldsFromOCR(String recognizedText) {
-        print("🧠 updateFormFieldsFromOCR appelé");
-        print("📝 Texte OCR reçu : $recognizedText");
+  void updateFormFieldsFromOCR(String recognizedText) {
+    print("🧠 updateFormFieldsFromOCR appelé");
+    print("📝 Texte OCR reçu : $recognizedText");
 
-        // Extraction du montant
-        final montantRegExp = RegExp(r'(\d{1,3}(?:[.,]\d{2}))\s*(€|eur)', caseSensitive: false);
-        final montantMatch = montantRegExp.firstMatch(recognizedText);
-        final montant = montantMatch?.group(1)?.replaceAll(',', '.');
+    // Extraction du montant
+    final montantRegExp = RegExp(r'(\d{1,3}(?:[.,]\d{2}))\s*(€|eur)', caseSensitive: false);
+    final montantMatch = montantRegExp.firstMatch(recognizedText);
+    final montant = montantMatch?.group(1)?.replaceAll(',', '.');
 
-        // Extraction de la date
-        final dateRegExp = RegExp(r'(\d{2}[\/\-.]\d{2}[\/\-.]\d{4})');
-        final dateMatch = dateRegExp.firstMatch(recognizedText);
-        final dateString = dateMatch?.group(1);
-        DateTime? parsedDate;
+    // Extraction de la date
+    final dateRegExp = RegExp(r'(\d{2}[\/\-.]\d{2}[\/\-.]\d{4})');
+    final dateMatch = dateRegExp.firstMatch(recognizedText);
+    final dateString = dateMatch?.group(1);
+    DateTime? parsedDate;
 
-        if (dateString != null) {
-          try {
-            final parts = dateString.split(RegExp(r'[\/\-.]'));
-            parsedDate = DateTime(
-              int.parse(parts[2]),
-              int.parse(parts[1]),
-              int.parse(parts[0]),
-            );
-          } catch (e) {
-            print("⚠️ Erreur lors du parsing de la date : $e");
-          }
-        }
+    if (dateString != null) {
+      try {
+        final parts = dateString.split(RegExp(r'[\/\-.]'));
+        parsedDate = DateTime(
+          int.parse(parts[2]),
+          int.parse(parts[1]),
+          int.parse(parts[0]),
+        );
+      } catch (e) {
+        print("⚠️ Erreur lors du parsing de la date : $e");
+      }
+    }
 
-        // Détection intelligente de la catégorie
-        final Map<String, String> keywordToCategory = {
-          'super u': 'Alimentation',
-          'carrefour': 'Alimentation',
-          'intermarché': 'Alimentation',
-          'monoprix': 'Alimentation',
-          'leclerc': 'Alimentation',
-          'picard': 'Alimentation',
-          'pharmacie': 'Santé',
-          'docteur': 'Santé',
-          'hopital': 'Santé',
-          'train': 'Transport',
-          'sncf': 'Transport',
-          'uber': 'Transport',
-          'essence': 'Transport',
-          'carburant': 'Transport',
-          'cinema': 'Loisir',
-          'netflix': 'Loisir',
-          'spotify': 'Loisir',
-          'fnac': 'Loisir',
-          'restaurant': 'Alimentation',
-          'mcdo': 'Alimentation',
-          'burger king': 'Alimentation',
-          'kfc': 'Alimentation',
-        };
+    // Détection intelligente de la catégorie
+    final Map<String, String> keywordToCategory = {
+      'super u': 'Alimentation',
+      'carrefour': 'Alimentation',
+      'intermarché': 'Alimentation',
+      'monoprix': 'Alimentation',
+      'leclerc': 'Alimentation',
+      'picard': 'Alimentation',
+      'pharmacie': 'Santé',
+      'docteur': 'Santé',
+      'hopital': 'Santé',
+      'train': 'Transport',
+      'sncf': 'Transport',
+      'uber': 'Transport',
+      'essence': 'Transport',
+      'carburant': 'Transport',
+      'cinema': 'Loisir',
+      'netflix': 'Loisir',
+      'spotify': 'Loisir',
+      'fnac': 'Loisir',
+      'restaurant': 'Alimentation',
+      'mcdo': 'Alimentation',
+      'burger king': 'Alimentation',
+      'kfc': 'Alimentation',
+    };
 
-        String matchedCategory = 'Autre';
-        final textLower = recognizedText.toLowerCase();
-        for (final entry in keywordToCategory.entries) {
-          if (textLower.contains(entry.key)) {
-            matchedCategory = entry.value;
-            break;
-          }
-        }
+    String matchedCategory = 'Autre';
+    final textLower = recognizedText.toLowerCase();
+    for (final entry in keywordToCategory.entries) {
+      if (textLower.contains(entry.key)) {
+        matchedCategory = entry.value;
+        break;
+      }
+    }
 
-        // MAJ de l'état avec setState
-        setState(() {
-          // Montant
-          if (montant != null) {
-            _amountController.text = montant;
-            print("💰 Montant détecté : $montant");
-          } else {
-            print("❌ Aucun montant détecté");
-          }
-
-          // Date
-          if (parsedDate != null) {
-            _selectedDate = parsedDate;
-            print("📅 Date détectée : $_selectedDate");
-          } else {
-            print("❌ Aucune date détectée");
-          }
-
-          // Catégorie
-          _selectedCategory = matchedCategory;
-          print("🏷️ Catégorie détectée : $matchedCategory");
-
-          // Résumé OCR (optionnel)
-          _ocrSummary = "💡 Dépense détectée : "
-              "${montant != null ? '$montant €' : 'montant inconnu'}, "
-              "$matchedCategory, "
-              "${parsedDate != null ? 'le ${parsedDate.day}/${parsedDate.month}/${parsedDate.year}' : 'date inconnue'}.";
-        });
+    setState(() {
+      if (montant != null) {
+        _amountController.text = montant;
+        print("💰 Montant détecté : $montant");
+      } else {
+        print("❌ Aucun montant détecté");
       }
 
+      if (parsedDate != null) {
+        _selectedDate = parsedDate;
+        _dateController.text = '${parsedDate.day}/${parsedDate.month}/${parsedDate.year}';
+        print("📅 Date détectée : $_selectedDate");
+      } else {
+        print("❌ Aucune date détectée");
+      }
 
+      _selectedCategory = matchedCategory;
+      print("🏷️ Catégorie détectée : $matchedCategory");
 
-
+      _ocrSummary = "💡 Dépense détectée : "
+          "${montant != null ? '$montant €' : 'montant inconnu'}, "
+          "${matchedCategory != 'Autre' ? matchedCategory : 'catégorie inconnue'}, "
+          "${parsedDate != null ? 'le ${parsedDate.day}/${parsedDate.month}/${parsedDate.year}' : 'date inconnue'}.";
+    });
+  }
 
   void _saveExpense() {
     final amount = _amountController.text;
@@ -229,14 +221,13 @@ class _ExpenseFormState extends State<ExpenseForm> {
               label: const Text('Scanner un ticket'),
             ),
             if (_ocrSummary != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 16.0),
-              child: Text(
-                _ocrSummary!,
-                style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+              Padding(
+                padding: const EdgeInsets.only(top: 16.0),
+                child: Text(
+                  _ocrSummary!,
+                  style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+                ),
               ),
-            ),
-
             const SizedBox(height: 16),
             TextField(
               controller: _amountController,
@@ -276,6 +267,4 @@ class _ExpenseFormState extends State<ExpenseForm> {
       ),
     );
   }
-
-
 }
