@@ -17,6 +17,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
   String _selectedCategory = 'Alimentaire';
   DateTime _selectedDate = DateTime.now();
   final TextEditingController _categoryController = TextEditingController();
+  String? _ocrSummary;
 
 
     @override
@@ -72,84 +73,98 @@ class _ExpenseFormState extends State<ExpenseForm> {
   }
 
        void updateFormFieldsFromOCR(String recognizedText) {
-          print("🧠 updateFormFieldsFromOCR appelé");
-          print("📝 Texte OCR reçu : $recognizedText");
+        print("🧠 updateFormFieldsFromOCR appelé");
+        print("📝 Texte OCR reçu : $recognizedText");
 
-          // 1. Extraction du montant (ex: 23,45 € ou 12.90 EUR)
-          final montantRegExp = RegExp(r'(\d{1,3}(?:[.,]\d{2}))\s*(€|eur)', caseSensitive: false);
-          final montantMatch = montantRegExp.firstMatch(recognizedText);
-          final montant = montantMatch?.group(1)?.replaceAll(',', '.');
+        // Extraction du montant
+        final montantRegExp = RegExp(r'(\d{1,3}(?:[.,]\d{2}))\s*(€|eur)', caseSensitive: false);
+        final montantMatch = montantRegExp.firstMatch(recognizedText);
+        final montant = montantMatch?.group(1)?.replaceAll(',', '.');
 
+        // Extraction de la date
+        final dateRegExp = RegExp(r'(\d{2}[\/\-.]\d{2}[\/\-.]\d{4})');
+        final dateMatch = dateRegExp.firstMatch(recognizedText);
+        final dateString = dateMatch?.group(1);
+        DateTime? parsedDate;
+
+        if (dateString != null) {
+          try {
+            final parts = dateString.split(RegExp(r'[\/\-.]'));
+            parsedDate = DateTime(
+              int.parse(parts[2]),
+              int.parse(parts[1]),
+              int.parse(parts[0]),
+            );
+          } catch (e) {
+            print("⚠️ Erreur lors du parsing de la date : $e");
+          }
+        }
+
+        // Détection intelligente de la catégorie
+        final Map<String, String> keywordToCategory = {
+          'super u': 'Alimentation',
+          'carrefour': 'Alimentation',
+          'intermarché': 'Alimentation',
+          'monoprix': 'Alimentation',
+          'leclerc': 'Alimentation',
+          'picard': 'Alimentation',
+          'pharmacie': 'Santé',
+          'docteur': 'Santé',
+          'hopital': 'Santé',
+          'train': 'Transport',
+          'sncf': 'Transport',
+          'uber': 'Transport',
+          'essence': 'Transport',
+          'carburant': 'Transport',
+          'cinema': 'Loisir',
+          'netflix': 'Loisir',
+          'spotify': 'Loisir',
+          'fnac': 'Loisir',
+          'restaurant': 'Alimentation',
+          'mcdo': 'Alimentation',
+          'burger king': 'Alimentation',
+          'kfc': 'Alimentation',
+        };
+
+        String matchedCategory = 'Autre';
+        final textLower = recognizedText.toLowerCase();
+        for (final entry in keywordToCategory.entries) {
+          if (textLower.contains(entry.key)) {
+            matchedCategory = entry.value;
+            break;
+          }
+        }
+
+        // MAJ de l'état avec setState
+        setState(() {
+          // Montant
           if (montant != null) {
-            print("💰 Montant détecté : $montant");
             _amountController.text = montant;
+            print("💰 Montant détecté : $montant");
           } else {
             print("❌ Aucun montant détecté");
           }
 
-          // 2. Extraction de la date (formats possibles : 12/07/2025, 12-07-2025, etc.)
-          final dateRegExp = RegExp(r'(\d{2}[\/\-.]\d{2}[\/\-.]\d{4})');
-          final dateMatch = dateRegExp.firstMatch(recognizedText);
-          final dateString = dateMatch?.group(1);
-
-          if (dateString != null) {
-            try {
-              final parts = dateString.split(RegExp(r'[\/\-.]'));
-              final parsedDate = DateTime(
-                int.parse(parts[2]),
-                int.parse(parts[1]),
-                int.parse(parts[0]),
-              );
-              _selectedDate = parsedDate;
-              print("📅 Date détectée : $_selectedDate");
-            } catch (e) {
-              print("⚠️ Erreur lors du parsing de la date : $e");
-            }
+          // Date
+          if (parsedDate != null) {
+            _selectedDate = parsedDate;
+            print("📅 Date détectée : $_selectedDate");
           } else {
             print("❌ Aucune date détectée");
           }
 
-          // 3. Détection intelligente de la catégorie par mots-clés
-          final Map<String, String> keywordToCategory = {
-            'super u': 'Alimentation',
-            'carrefour': 'Alimentation',
-            'intermarché': 'Alimentation',
-            'monoprix': 'Alimentation',
-            'leclerc': 'Alimentation',
-            'picard': 'Alimentation',
-            'pharmacie': 'Santé',
-            'docteur': 'Santé',
-            'hopital': 'Santé',
-            'train': 'Transport',
-            'sncf': 'Transport',
-            'uber': 'Transport',
-            'essence': 'Transport',
-            'carburant': 'Transport',
-            'cinema': 'Loisir',
-            'netflix': 'Loisir',
-            'spotify': 'Loisir',
-            'fnac': 'Loisir',
-            'restaurant': 'Alimentation',
-            'mcdo': 'Alimentation',
-            'burger king': 'Alimentation',
-            'kfc': 'Alimentation',
-          };
-
-          String matchedCategory = 'Autre';
-          final textLower = recognizedText.toLowerCase();
-          for (final entry in keywordToCategory.entries) {
-            if (textLower.contains(entry.key)) {
-              matchedCategory = entry.value;
-              break;
-            }
-          }
-
+          // Catégorie
           _selectedCategory = matchedCategory;
           print("🏷️ Catégorie détectée : $matchedCategory");
 
-          // Rafraîchir les champs avec setState
-          setState(() {});
-        }
+          // Résumé OCR (optionnel)
+          _ocrSummary = "💡 Dépense détectée : "
+              "${montant != null ? '$montant €' : 'montant inconnu'}, "
+              "$matchedCategory, "
+              "${parsedDate != null ? 'le ${parsedDate.day}/${parsedDate.month}/${parsedDate.year}' : 'date inconnue'}.";
+        });
+      }
+
 
 
 
@@ -213,6 +228,15 @@ class _ExpenseFormState extends State<ExpenseForm> {
               icon: const Icon(Icons.photo_camera),
               label: const Text('Scanner un ticket'),
             ),
+            if (_ocrSummary != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: Text(
+                _ocrSummary!,
+                style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+              ),
+            ),
+
             const SizedBox(height: 16),
             TextField(
               controller: _amountController,
@@ -252,4 +276,6 @@ class _ExpenseFormState extends State<ExpenseForm> {
       ),
     );
   }
+
+
 }
