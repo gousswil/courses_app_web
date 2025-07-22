@@ -1,5 +1,5 @@
 async function callVisionAPI(base64Image, callbackId) {
-  const apiKey = 'TA_CLE_API_ICI'; // remplace ici
+  const apiKey = 'fcb0e64f503d093f321f748d58a72e5e782da7b5'; // remplace ici
 
   const cleanBase64 = base64Image.split(',')[1]; // important
   console.log("📷 Image (base64) prête, envoi à Google...");
