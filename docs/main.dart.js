@@ -38577,7 +38577,7 @@ r.toString
 B.zd.adm(r,o,s)
 r=$.arN()
 if(!("extractTextFromImage" in r.a)){A.ev("\u274c Fonction extractTextFromImage non disponible !")
-return}r.DS("extractTextFromImage",[q,p])},
+return}r.DS("callVisionAPI",[q,p])},
 $S:279}
 A.ahj.prototype={
 $1(a){var s,r,q=this.c
