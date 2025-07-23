@@ -57,6 +57,7 @@ function analyzeTicketText(text) {
   // 💰 Montant total : première ligne avec "total" et un montant
   let total = null;
   total=extractTotal(text);
+  console.log("Montant total : "+total);
  /*  for (const line of lines) {
     if (/total/i.test(line) && /\d+[.,]\d{2}/.test(line)) {
       const match = line.match(/(\d+[.,]\d{2})/);
