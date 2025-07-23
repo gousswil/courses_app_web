@@ -62,13 +62,14 @@ class _ExpenseFormState extends State<ExpenseForm> {
 
         html.window.addEventListener(eventKey, listener);
 
-        if (!js.context.hasProperty('extractTextFromImage')) {
-          print("❌ Fonction extractTextFromImage non disponible !");
+        if (!js.context.hasProperty('callVisionAPI')) {
+          print("❌ Fonction callVisionAPI non disponible !");
           return;
         }
 
-        /* js.context.callMethod('extractTextFromImage', [base64Image, callbackId]); */
         js.context.callMethod('callVisionAPI', [base64Image, callbackId]);
+
+        
 
       });
     });

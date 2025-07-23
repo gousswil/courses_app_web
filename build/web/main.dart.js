@@ -38541,7 +38541,7 @@ r=window
 r.toString
 B.zd.adh(r,o,s)
 r=$.arK()
-if(!("extractTextFromImage" in r.a)){A.e7("\u274c Fonction extractTextFromImage non disponible !")
+if(!("callVisionAPI" in r.a)){A.e7("\u274c Fonction callVisionAPI non disponible !")
 return}r.DQ("callVisionAPI",[q,p])},
 $S:279}
 A.ahh.prototype={

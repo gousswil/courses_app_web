@@ -1,5 +1,5 @@
 async function extractTextFromImage(base64Image, callbackId) {
-  const apiKey = 'AIzaSyBk-HulAqVpDul1fthoodfgmb3M2w9sx78'; // Remplace par ta vraie clé
+  const apiKey = ''; // Remplace par ta vraie clé
   const endpoint = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
 
   const imageBase64 = base64Image.split(',')[1]; // Supprime le préfixe data:image/png;base64,
@@ -118,3 +118,7 @@ function analyzeTicketText(text) {
     category: matchedCategory,
   };
 }
+// ✅ Exposer la fonction à Flutter
+window.callVisionAPI = function (base64Image, callbackId) {
+  extractTextFromImage(base64Image, callbackId);
+};
