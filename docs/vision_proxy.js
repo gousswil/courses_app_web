@@ -1,5 +1,5 @@
 async function extractTextFromImage(base64Image, callbackId) {
-  const apiKey = ''; // Remplace par ta vraie clé
+  const apiKey = 'AIzaSyBk-HulAqVpDul1fthoodfgmb3M2w9sx78'; // Remplace par ta vraie clé
   const endpoint = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
 
   const imageBase64 = base64Image.split(',')[1]; // Supprime le préfixe data:image/png;base64,
