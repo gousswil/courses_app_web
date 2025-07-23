@@ -126,10 +126,33 @@ function extractTotal(text) {
   /* let totalLine = lines.find(line =>
     /total\s*[:\-]?\s*\d+[.,]\d{2}/i.test(line)
   ); */
-  let totalLine = lines.find(line =>
+  /* let totalLine = lines.find(line =>
     /total\s+(\d+\s+)*\d+\s*(?:€|euros?)?|(?:total|ttc|eur|montant)\s+\d+\s*(?:€|euros?)?/i.test(line)
-  );
-  console.log("TotalLine : "+ totalLine);
+  ); */
+  
+    //On va capturer toutes suivant ces criètres jusqu'à rencontrer des lignes contenant de nouveau des mots 
+    let totalLineIndex = lines.findIndex(line =>
+        /total\s+(\d+\s+)*\d+\s*(?:€|euros?)?|(?:total|ttc|eur)\s+\d+\s*(?:€|euros?)?/i.test(line)
+      );
+
+      let capturedLines = [];
+      if (totalLineIndex !== -1) {
+        // Ajouter la ligne "total" elle-même
+        capturedLines.push(lines[totalLineIndex]);
+        
+        // Parcourir les lignes suivantes
+        for (let i = totalLineIndex + 1; i < lines.length; i++) {
+          // Si la ligne contient des lettres, on s'arrête
+          if (/[a-zA-ZÀ-ÿ]/.test(lines[i])) {
+            break;
+          }
+          // Sinon on ajoute la ligne
+          capturedLines.push(lines[i]);
+        }
+      }
+
+      let totalLine = capturedLines;
+      console.log("TotalLine : "+ totalLine);
   if (!totalLine) {
     // Fallback : chercher juste le plus gros montant
     const allAmounts = [...text.matchAll(/\d+[.,]\d{2}/g)].map(m => parseFloat(m[0].replace(',', '.')));
