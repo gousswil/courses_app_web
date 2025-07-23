@@ -85,7 +85,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
     
           // Parser le JSON
           dynamic data = jsonDecode(cleanJson);
-          print("DATA JSON OCR reçu : $data");
+          print("DATA JSON OCR reçu 1 : $data");
           final String? montant = data['total'];
           final String? dateString = data['date'];
           final String? category = data['category'];

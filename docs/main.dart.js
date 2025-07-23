@@ -38495,7 +38495,7 @@ alb(a){var s,r,q,p,o,n,m,l,k
 try{l={}
 s=B.d.nA(a)
 r=B.bt.QR(0,s,null)
-A.f8("DATA JSON OCR re\xe7u : "+A.p(r))
+A.f8("DATA JSON OCR re\xe7u 1 : "+A.p(r))
 q=J.bs(r,"total")
 p=J.bs(r,"date")
 o=J.bs(r,"category")
