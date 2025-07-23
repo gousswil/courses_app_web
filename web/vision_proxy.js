@@ -127,9 +127,9 @@ function extractTotal(text) {
     /total\s*[:\-]?\s*\d+[.,]\d{2}/i.test(line)
   ); */
   let totalLine = lines.find(line =>
-  /total\s+(\d+\s+)*\d+\s*(?:€|euros?)?|(?:total|ttc|eur|montant)\s+\d+\s*(?:€|euros?)?/i.test(line)
-);
-
+    /total\s+(\d+\s+)*\d+\s*(?:€|euros?)?|(?:total|ttc|eur|montant)\s+\d+\s*(?:€|euros?)?/i.test(line)
+  );
+  console.log("TotalLine : "+ totalLine);
   if (!totalLine) {
     // Fallback : chercher juste le plus gros montant
     const allAmounts = [...text.matchAll(/\d+[.,]\d{2}/g)].map(m => parseFloat(m[0].replace(',', '.')));
