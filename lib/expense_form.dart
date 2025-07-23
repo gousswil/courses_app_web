@@ -103,7 +103,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
           setState(() {
             if (montant != null) {
               _amountController.text = (montant ?? '').toString().replaceAll(RegExp(r'[^\d.,]'), '');
-              print("💰 Montant détecté : $montant");
+              print("💰 Montant détecté pb : ${montant?.toString() ?? 'null'}");
             } else {
               print("❌ Aucun montant détecté");
             }

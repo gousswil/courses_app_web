@@ -38576,7 +38576,7 @@ A.aho.prototype={
 $0(){var s,r,q,p=this,o=p.c,n=o!=null
 if(n){s=A.kM("[^\\d.,]",!1)
 p.b.d.sfC(0,A.aru(o,s,""))
-A.dO("\ud83d\udcb0 Montant d\xe9tect\xe9 : "+o)}else A.dO("\u274c Aucun montant d\xe9tect\xe9")
+A.dO("\ud83d\udcb0 Montant d\xe9tect\xe9 pb : "+o)}else A.dO("\u274c Aucun montant d\xe9tect\xe9")
 s=p.a
 r=s.a
 if(r!=null){q=p.b
