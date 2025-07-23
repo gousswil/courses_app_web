@@ -74,115 +74,58 @@ class _ExpenseFormState extends State<ExpenseForm> {
     });
   }
 
-  void updateFormFieldsFromOCR(String recognizedText) {
-    print("🧠 updateFormFieldsFromOCR appelé");
-    print("📝 Texte OCR reçu : $recognizedText");
+      void updateFormFieldsFromOCR(String jsonString) {
+        print("🧠 updateFormFieldsFromOCR appelé");
+        print("📦 JSON OCR reçu : $jsonString");
 
-    final cleanedText = recognizedText.replaceAll(RegExp(r'[^\x00-\x7F]+'), ' ').replaceAll('\n', ' ');
+        try {
+          final data = json.decode(jsonString);
 
-    final montantRegExp = RegExp(
-      r'(\d+[.,]\d{2})\s*(€|eur|e)?',
-      caseSensitive: false,
-    );
-    final montantMatch = montantRegExp.firstMatch(cleanedText);
-    final montant = montantMatch?.group(1)?.replaceAll(',', '.').replaceAll(' ', '');
+          final String? montant = data['total'];
+          final String? dateString = data['date'];
+          final String? category = data['category'];
+          final String fullText = data['text'];
 
-    final List<RegExp> dateRegExps = [
-      RegExp(r'(\d{2}[\/\-\.]\d{2}[\/\-\.]\d{4})'),
-      RegExp(r'(\d{4}[\/\-\.]\d{2}[\/\-\.]\d{2})'),
-      RegExp(r'(\d{2}[\/\-\.]\d{2}[\/\-\.]\d{2})'),
-    ];
+          print('🧾 Texte complet : $fullText');
 
-    DateTime? parsedDate;
-    String? dateString;
+          DateTime? parsedDate;
+          if (dateString != null) {
+            try {
+              parsedDate = DateTime.parse(dateString);
+            } catch (e) {
+              print("⚠️ Erreur de parsing de la date : $e");
+            }
+          }
 
-    for (final regex in dateRegExps) {
-      final match = regex.firstMatch(cleanedText);
-      if (match != null) {
-        dateString = match.group(1);
-        break;
-      }
-    }
+          setState(() {
+            if (montant != null) {
+              _amountController.text = montant;
+              print("💰 Montant détecté : $montant");
+            } else {
+              print("❌ Aucun montant détecté");
+            }
 
-    if (dateString != null) {
-      try {
-        final parts = dateString.split(RegExp(r'[\/\-\.]'));
-        if (parts[0].length == 4) {
-          parsedDate = DateTime(
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-            int.parse(parts[2]),
-          );
-        } else {
-          final year = parts[2].length == 2
-              ? 2000 + int.parse(parts[2])
-              : int.parse(parts[2]);
-          parsedDate = DateTime(year, int.parse(parts[1]), int.parse(parts[0]));
+            if (parsedDate != null) {
+              _selectedDate = parsedDate;
+              _dateController.text = '${parsedDate.day}/${parsedDate.month}/${parsedDate.year}';
+              print("📅 Date détectée : $_selectedDate");
+            } else {
+              print("❌ Aucune date détectée");
+            }
+
+            _selectedCategory = category ?? 'Autre';
+            print("🏷️ Catégorie détectée : $_selectedCategory");
+
+            _ocrSummary = "💡 Dépense détectée : "
+                "${montant != null ? '$montant €' : 'montant inconnu'}, "
+                "${_selectedCategory}, "
+                "${parsedDate != null ? 'le ${_dateController.text}' : 'date inconnue'}.";
+          });
+        } catch (e) {
+          print("❌ Erreur lors de l'analyse JSON : $e");
         }
-      } catch (e) {
-        print("⚠️ Erreur lors du parsing de la date : $e");
-      }
-    }
-
-    final Map<String, String> keywordToCategory = {
-      'super u': 'Alimentaire',
-      'carrefour': 'Alimentaire',
-      'intermarché': 'Alimentaire',
-      'monoprix': 'Alimentaire',
-      'leclerc': 'Alimentaire',
-      'picard': 'Alimentaire',
-      'pharmacie': 'Santé',
-      'docteur': 'Santé',
-      'hopital': 'Santé',
-      'train': 'Transport',
-      'sncf': 'Transport',
-      'uber': 'Transport',
-      'essence': 'Transport',
-      'carburant': 'Transport',
-      'cinema': 'Loisir',
-      'netflix': 'Loisir',
-      'spotify': 'Loisir',
-      'fnac': 'Loisir',
-      'restaurant': 'Alimentaire',
-      'mcdo': 'Alimentaire',
-      'burger king': 'Alimentaire',
-      'kfc': 'Alimentaire',
-    };
-
-    String matchedCategory = 'Autre';
-    final textLower = cleanedText.toLowerCase();
-    for (final entry in keywordToCategory.entries) {
-      if (textLower.contains(entry.key)) {
-        matchedCategory = entry.value;
-        break;
-      }
-    }
-
-    setState(() {
-      if (montant != null) {
-        _amountController.text = montant;
-        print("💰 Montant détecté : $montant");
-      } else {
-        print("❌ Aucun montant détecté");
       }
 
-      if (parsedDate != null) {
-        _selectedDate = parsedDate;
-        _dateController.text = '${parsedDate.day}/${parsedDate.month}/${parsedDate.year}';
-        print("📅 Date détectée : $_selectedDate");
-      } else {
-        print("❌ Aucune date détectée");
-      }
-
-      _selectedCategory = matchedCategory;
-      print("🏷️ Catégorie détectée : $matchedCategory");
-
-      _ocrSummary = "💡 Dépense détectée : "
-          "${montant != null ? '$montant €' : 'montant inconnu'}, "
-          "${matchedCategory != 'Autre' ? matchedCategory : 'catégorie inconnue'}, "
-          "${parsedDate != null ? 'le ${parsedDate.day}/${parsedDate.month}/${parsedDate.year}' : 'date inconnue'}.";
-    });
-  }
 
   void _saveExpense() {
     final amount = _amountController.text;
