@@ -154,7 +154,7 @@ function extractTotal(text) {
       
       console.log("capturedLines : "+ capturedLines);
       let highestNumber = Math.max(...capturedLines.flatMap(line => line.match(/\d+[.,]?\d*/g) || []).map(n => parseFloat(n.replace(',', '.'))));
-       console.log("highestNumber : "+ highestNumber); 
+       console.log("highestNumber found : "+ highestNumber); 
        let totalLine = highestNumber; 
       /* if (!totalLine) {
             // Fallback : chercher juste le plus gros montant
@@ -162,9 +162,10 @@ function extractTotal(text) {
             const maxAmount = Math.max(...allAmounts);
             return maxAmount ? maxAmount.toFixed(2) : null;
           } */
-
-        const match = totalLine.match(/\d+[.,]\d{2}/);
-        return match ? match[0].replace(',', '.') : null;
+        if (totalLine) {
+        //const match = totalLine.match(/\d+[.,]\d{2}/);
+        return totalLine.replace(',', '.');
+        }else return null;
 }
 
 // ✅ Exposer la fonction à Flutter
