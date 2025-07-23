@@ -76,20 +76,15 @@ class _ExpenseFormState extends State<ExpenseForm> {
   }
 
       void updateFormFieldsFromOCR(String jsonString) {
-        /* print("🧠 updateFormFieldsFromOCR appelé"); */
-       /*  print("📦 JSON OCR reçu : $jsonString"); */
+        print("🧠 updateFormFieldsFromOCR appelé");
+        print("📦 JSON OCR d'origine reçu : $jsonString");
 
         try {
-          /* final data = json.decode(jsonString); */
-           String cleanJson = jsonString.trim();
-    
-          // Parser le JSON
-          dynamic data = jsonDecode(cleanJson);
-          print("DATA JSON OCR reçu 1 : $data");
-          final String? montant = data['total'];
-          final String? dateString = data['date'];
-          final String? category = data['category'];
-          final String fullText = data['text'];
+          
+          final String? montant = RegExp(r'"total"\s*:\s*"?([^",}]+)"?').firstMatch(jsonString)?.group(1)?.replaceAll(',', '.') ?? '';
+          final String? dateString = RegExp(r'"date"\s*:\s*"?([^",}]+)"?').firstMatch(jsonString)?.group(1) ?? '';
+          final String? category = RegExp(r'"category"\s*:\s*"?([^",}]+)"?').firstMatch(jsonString)?.group(1) ?? '';
+          /* final String fullText = data['text']; */
 
         /*   print('🧾 Texte complet : $fullText');
 
