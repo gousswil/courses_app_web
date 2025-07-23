@@ -154,7 +154,7 @@ function extractTotal(text) {
       
       console.log("capturedLines : "+ capturedLines);
       let highestNumber = Math.max(...capturedLines.flatMap(line => line.match(/\d+[.,]?\d*/g) || []).map(n => parseFloat(n.replace(',', '.'))));
-       console.log("highestNumber found : "+ highestNumber); 
+       console.log("highestNumber find : "+ highestNumber); 
       /* if (!totalLine) {
             // Fallback : chercher juste le plus gros montant
             const allAmounts = [...text.matchAll(/\d+[.,]\d{2}/g)].map(m => parseFloat(m[0].replace(',', '.')));
