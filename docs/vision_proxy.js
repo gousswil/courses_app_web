@@ -56,7 +56,8 @@ function analyzeTicketText(text) {
 
   // 💰 Montant total : première ligne avec "total" et un montant
   let total = null;
-  for (const line of lines) {
+  total=extractTotal(text);
+ /*  for (const line of lines) {
     if (/total/i.test(line) && /\d+[.,]\d{2}/.test(line)) {
       const match = line.match(/(\d+[.,]\d{2})/);
       if (match) {
@@ -64,7 +65,7 @@ function analyzeTicketText(text) {
         break;
       }
     }
-  }
+  } */
 
   // 📅 Date : dernière date détectée
   const dateRegex = /\b(\d{2}[\/\-]\d{2}[\/\-](\d{2}|\d{4}))\b/g;
@@ -118,6 +119,24 @@ function analyzeTicketText(text) {
     category: matchedCategory,
   };
 }
+
+function extractTotal(text) {
+  const lines = text.split('\n');
+  let totalLine = lines.find(line =>
+    /total\s*[:\-]?\s*\d+[.,]\d{2}/i.test(line)
+  );
+
+  if (!totalLine) {
+    // Fallback : chercher juste le plus gros montant
+    const allAmounts = [...text.matchAll(/\d+[.,]\d{2}/g)].map(m => parseFloat(m[0].replace(',', '.')));
+    const maxAmount = Math.max(...allAmounts);
+    return maxAmount ? maxAmount.toFixed(2) : null;
+  }
+
+  const match = totalLine.match(/\d+[.,]\d{2}/);
+  return match ? match[0].replace(',', '.') : null;
+}
+
 // ✅ Exposer la fonction à Flutter
 window.callVisionAPI = function (base64Image, callbackId) {
   extractTextFromImage(base64Image, callbackId);
