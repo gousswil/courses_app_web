@@ -58,15 +58,7 @@ function analyzeTicketText(text) {
   let total = null;
   total=extractTotal(text);
   console.log("Montant total : "+total);
- /*  for (const line of lines) {
-    if (/total/i.test(line) && /\d+[.,]\d{2}/.test(line)) {
-      const match = line.match(/(\d+[.,]\d{2})/);
-      if (match) {
-        total = match[1].replace(',', '.');
-        break;
-      }
-    }
-  } */
+
 
   // 📅 Date : dernière date détectée
   const dateRegex = /\b(\d{2}[\/\-]\d{2}[\/\-](\d{2}|\d{4}))\b/g;
@@ -123,14 +115,7 @@ function analyzeTicketText(text) {
 
 function extractTotal(text) {
   const lines = text.split('\n');
-  /* let totalLine = lines.find(line =>
-    /total\s*[:\-]?\s*\d+[.,]\d{2}/i.test(line)
-  ); */
-  /* let totalLine = lines.find(line =>
-    /total\s+(\d+\s+)*\d+\s*(?:€|euros?)?|(?:total|ttc|eur|montant)\s+\d+\s*(?:€|euros?)?/i.test(line)
-  ); */
-  
-    //On va capturer toutes suivant ces criètres jusqu'à rencontrer des lignes contenant de nouveau des mots 
+      //On va capturer toutes suivant ces criètres jusqu'à rencontrer des lignes contenant de nouveau des mots 
     let totalLineIndex = lines.findIndex(line =>
         /total\s+(\d+\s+)*\d+\s*(?:€|euros?)?|(?:total|ttc|eur)\s+\d+\s*(?:€|euros?)?/i.test(line)
       );
@@ -155,12 +140,7 @@ function extractTotal(text) {
       console.log("capturedLines : "+ capturedLines);
       let highestNumber = Math.max(...capturedLines.flatMap(line => line.match(/\d+[.,]?\d*/g) || []).map(n => parseFloat(n.replace(',', '.'))));
        console.log("highestNumber find : "+ highestNumber); 
-      /* if (!totalLine) {
-            // Fallback : chercher juste le plus gros montant
-            const allAmounts = [...text.matchAll(/\d+[.,]\d{2}/g)].map(m => parseFloat(m[0].replace(',', '.')));
-            const maxAmount = Math.max(...allAmounts);
-            return maxAmount ? maxAmount.toFixed(2) : null;
-          } */
+     
         if (highestNumber) {
         //const match = totalLine.match(/\d+[.,]\d{2}/);
         return highestNumber;

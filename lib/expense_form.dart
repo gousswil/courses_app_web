@@ -89,6 +89,8 @@ class _ExpenseFormState extends State<ExpenseForm> {
 
           print('🧾 Texte complet : $fullText');
 
+          print('Montant seul : $montant');
+
           DateTime? parsedDate;
           if (dateString != null) {
             try {
@@ -100,7 +102,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
 
           setState(() {
             if (montant != null) {
-              _amountController.text = montant;
+              _amountController.text = (montant ?? '').toString().replaceAll(RegExp(r'[^\d.,]'), '');
               print("💰 Montant détecté : $montant");
             } else {
               print("❌ Aucun montant détecté");
