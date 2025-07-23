@@ -53,7 +53,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
 
           final customEvent = e as html.CustomEvent;
           final text = customEvent.detail as String;
-          print('🧾 Texte OCR détecté :\n$text');
+        /*   print('🧾 Texte OCR détecté :\n$text'); */
 
           updateFormFieldsFromOCR(text);
 
