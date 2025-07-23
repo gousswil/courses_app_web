@@ -77,7 +77,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
 
       void updateFormFieldsFromOCR(String jsonString) {
         print("🧠 updateFormFieldsFromOCR appelé");
-        print("📦 JSON OCR reçu : $jsonString");
+       /*  print("📦 JSON OCR reçu : $jsonString"); */
 
         try {
           final data = json.decode(jsonString);
