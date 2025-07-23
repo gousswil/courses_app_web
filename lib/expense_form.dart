@@ -80,7 +80,11 @@ class _ExpenseFormState extends State<ExpenseForm> {
        /*  print("📦 JSON OCR reçu : $jsonString"); */
 
         try {
-          final data = json.decode(jsonString);
+          /* final data = json.decode(jsonString); */
+           String cleanJson = jsonString.trim();
+    
+          // Parser le JSON
+          dynamic data = jsonDecode(cleanJson);
           print("DATA JSON OCR reçu : $data");
           final String? montant = data['total'];
           final String? dateString = data['date'];
