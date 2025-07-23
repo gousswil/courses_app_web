@@ -38491,9 +38491,9 @@ s.accept="image/*"
 s.click()
 A.awf(s,"change",new A.ahl(this,s),!1)},
 ala(a){var s,r,q,p,o,n,m,l
-A.f8("\ud83e\udde0 updateFormFieldsFromOCR appel\xe9")
 try{m={}
 s=B.bt.f4(0,a)
+A.f8("DATA JSON OCR re\xe7u : "+A.p(s))
 r=J.bs(s,"total")
 q=J.bs(s,"date")
 p=J.bs(s,"category")
