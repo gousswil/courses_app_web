@@ -123,9 +123,12 @@ function analyzeTicketText(text) {
 
 function extractTotal(text) {
   const lines = text.split('\n');
-  let totalLine = lines.find(line =>
+  /* let totalLine = lines.find(line =>
     /total\s*[:\-]?\s*\d+[.,]\d{2}/i.test(line)
-  );
+  ); */
+  let totalLine = lines.find(line =>
+  /total\s+(\d+\s+)*\d+\s*(?:€|euros?)?|(?:total|ttc|eur|montant)\s+\d+\s*(?:€|euros?)?/i.test(line)
+);
 
   if (!totalLine) {
     // Fallback : chercher juste le plus gros montant
