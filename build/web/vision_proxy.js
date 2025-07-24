@@ -78,6 +78,7 @@ function analyzeTicketText(text) {
     'intermarché': 'Alimentaire',
     'monoprix': 'Alimentaire',
     'leclerc': 'Alimentaire',
+    'biocoop': 'Alimentaire',
     'picard': 'Alimentaire',
     'pharmacie': 'Santé',
     'docteur': 'Santé',
