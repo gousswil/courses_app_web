@@ -15,6 +15,8 @@ class _ExpenseFormState extends State<ExpenseForm> {
   final _amountController = TextEditingController();
   final _dateController = TextEditingController();
   final _categoryController = TextEditingController();
+  bool _isAnalyzing = false;
+
   String _selectedCategory = 'Alimentaire';
   DateTime _selectedDate = DateTime.now();
   String? _ocrSummary;
@@ -69,12 +71,20 @@ class _ExpenseFormState extends State<ExpenseForm> {
             final eventKey = "ocrResult-$callbackId";
 
             html.EventListener? listener;
-
-            listener = allowInterop((e) {
+         
+          listener = allowInterop((e) {
               final customEvent = e as html.CustomEvent;
               final text = customEvent.detail as String;
+
               updateFormFieldsFromOCR(text);
-              html.window.removeEventListener(eventKey, listener);
+
+              setState(() {
+                _isAnalyzing = false;
+              });
+
+              if (listener != null) {
+                html.window.removeEventListener(eventKey, listener!);
+              }
             });
 
             html.window.addEventListener(eventKey, listener);
@@ -83,7 +93,9 @@ class _ExpenseFormState extends State<ExpenseForm> {
               print("❌ Fonction callVisionAPI non disponible !");
               return;
             }
-
+               setState(() {
+                _isAnalyzing = true;
+              });
             js.context.callMethod('callVisionAPI', [base64Image, callbackId]);
           });
 
@@ -212,6 +224,10 @@ class _ExpenseFormState extends State<ExpenseForm> {
                         });
                       } else {
                         _uploadAndScanImage(useCamera: false);
+                        setState(() {
+                          _isAnalyzing = true;
+                          _ocrSummary = null;
+                        });
                       }
                     },
                   /* _onScanTicketPressed, */
@@ -220,16 +236,47 @@ class _ExpenseFormState extends State<ExpenseForm> {
                 ),
                 if (_showMobileOptions) ...[
                   const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () => _uploadAndScanImage(useCamera: true),
-                    child: const Text('📷 Prendre une photo'),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      _uploadAndScanImage(useCamera: true); // Caméra
+                      setState(() {
+                        _isAnalyzing = true;
+                        _ocrSummary = null;
+                        _showMobileOptions = false; // On masque après clic
+                      });
+                    },
+                    icon: const Icon(Icons.camera_alt),
+                    label: const Text('📷 Prendre une photo'),
                   ),
                   const SizedBox(height: 4),
-                  ElevatedButton(
-                    onPressed: () => _uploadAndScanImage(useCamera: false),
-                    child: const Text('📁 Choisir un fichier'),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      _uploadAndScanImage(useCamera: false); // Fichier
+                      setState(() {
+                        _isAnalyzing = true;
+                        _ocrSummary = null;
+                        _showMobileOptions = false; // On masque après clic
+                      });
+                    },
+                    icon: const Icon(Icons.folder),
+                    label: const Text('📁 Choisir un fichier'),
                   ),
                 ],
+                if (_isAnalyzing)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(width: 12),
+                        Text(
+                          'Analyse du ticket en cours...',
+                          style: TextStyle(fontStyle: FontStyle.italic),
+                        ),
+                      ],
+                    ),
+                  ),
                 if (_ocrSummary != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 16.0),
