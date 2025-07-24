@@ -27,53 +27,56 @@ class _ExpenseFormState extends State<ExpenseForm> {
     super.dispose();
   }
 
-  void _uploadAndScanImage() {
-    final uploadInput = html.FileUploadInputElement();
-    uploadInput.accept = 'image/*';
-    uploadInput.click();
+     void _uploadAndScanImage() {
+          final uploadInput = html.FileUploadInputElement();
 
-    uploadInput.onChange.listen((event) {
-      final file = uploadInput.files?.first;
-      if (file == null) return;
+          uploadInput.accept = 'image/*';
 
-      final reader = html.FileReader();
-      reader.readAsDataUrl(file);
+          // ✅ Permet de déclencher la caméra sur mobile
+          uploadInput.setAttribute('capture', 'environment');
 
-      reader.onLoadEnd.listen((event) {
-        final base64Image = reader.result as String;
-        final callbackId = 'ocr_callback_${DateTime.now().millisecondsSinceEpoch}';
-        final eventKey = "ocrResult-$callbackId";
+          uploadInput.click();
 
-        print('📡 Écoute du callback : $eventKey');
+          uploadInput.onChange.listen((event) {
+            final file = uploadInput.files?.first;
+            if (file == null) return;
 
-        html.EventListener? listener;
+            final reader = html.FileReader();
+            reader.readAsDataUrl(file);
 
-        listener = allowInterop((e) {
-          print('✅ Callback reçu : $eventKey');
+            reader.onLoadEnd.listen((event) {
+              final base64Image = reader.result as String;
+              final callbackId = 'ocr_callback_${DateTime.now().millisecondsSinceEpoch}';
+              final eventKey = "ocrResult-$callbackId";
 
-          final customEvent = e as html.CustomEvent;
-          final text = customEvent.detail as String;
-        /*   print('🧾 Texte OCR détecté :\n$text'); */
+              print('📡 Écoute du callback : $eventKey');
 
-          updateFormFieldsFromOCR(text);
+              html.EventListener? listener;
 
-          html.window.removeEventListener(eventKey, listener);
-        });
+              listener = allowInterop((e) {
+                print('✅ Callback reçu : $eventKey');
 
-        html.window.addEventListener(eventKey, listener);
+                final customEvent = e as html.CustomEvent;
+                final text = customEvent.detail as String;
+                print('🧾 Texte OCR détecté :\n$text');
 
-        if (!js.context.hasProperty('callVisionAPI')) {
-          print("❌ Fonction callVisionAPI non disponible !");
-          return;
+                updateFormFieldsFromOCR(text);
+
+                html.window.removeEventListener(eventKey, listener);
+              });
+
+              html.window.addEventListener(eventKey, listener);
+
+              if (!js.context.hasProperty('callVisionAPI')) {
+                print("❌ Fonction callVisionAPI non disponible !");
+                return;
+              }
+
+              js.context.callMethod('callVisionAPI', [base64Image, callbackId]);
+            });
+          });
         }
 
-        js.context.callMethod('callVisionAPI', [base64Image, callbackId]);
-
-        
-
-      });
-    });
-  }
 
       void updateFormFieldsFromOCR(String jsonString) {
         print("🧠 updateFormFieldsFromOCR appelé");
