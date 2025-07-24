@@ -20,6 +20,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
   String? _ocrSummary;
 
     bool _showMobileOptions = false;
+    
 
     bool get _isMobile {
       final userAgent = html.window.navigator.userAgent.toLowerCase();
@@ -196,6 +197,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
 
   @override
       Widget build(BuildContext context) {
+        final isSmallScreen = MediaQuery.of(context).size.width < 600;
         return Scaffold(
           appBar: AppBar(title: const Text('Ajouter une dépense')),
           body: Padding(
@@ -203,7 +205,16 @@ class _ExpenseFormState extends State<ExpenseForm> {
             child: ListView(
               children: [
                 ElevatedButton.icon(
-                  onPressed: _onScanTicketPressed,
+                  onPressed: () {
+                      if (isSmallScreen) {
+                        setState(() {
+                          _showMobileOptions = !_showMobileOptions;
+                        });
+                      } else {
+                        _uploadAndScanImage(useCamera: false);
+                      }
+                    },
+                  /* _onScanTicketPressed, */
                   icon: const Icon(Icons.photo_camera),
                   label: const Text('Scanner un ticket'),
                 ),
