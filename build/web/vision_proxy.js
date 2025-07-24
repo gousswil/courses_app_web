@@ -53,7 +53,7 @@ async function extractTextFromImage(base64Image, callbackId) {
 function analyzeTicketText(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   const fullTextLower = text.toLowerCase();
-  console.log("Text brut : "+text);
+  console.log("Text brut 2 : "+text);
   // 💰 Montant total : première ligne avec "total" et un montant
   let total = null;
   total=extractTotal(text);
@@ -119,7 +119,7 @@ function extractTotal(text) {
   const lines = text.split('\n');
       //On va capturer toutes suivant ces criètres jusqu'à rencontrer des lignes contenant de nouveau des mots 
     let totalLineIndex = lines.findIndex(line =>
-        /^(?:total|montant|ttc)\s*$|total\s+(\d+\s+)*\d+\s*(?:€|euros?)?|(?:total|ttc|eur|montant)\s+\d+\s*(?:€|euros?)?/i.test(line)
+        /montant\s+total|ttc|^(?:total|montant)\s*$|total\s+(\d+\s+)*\d+\s*(?:€|euros?)?|(?:total|eur|montant)\s+\d+\s*(?:€|euros?)?/i.test(line)
       );
 
       let capturedLines = [];
