@@ -117,35 +117,56 @@ function analyzeTicketText(text) {
 
 function extractTotal(text) {
   const lines = text.split('\n');
-      //On va capturer toutes suivant ces criètres jusqu'à rencontrer des lignes contenant de nouveau des mots 
-    let totalLineIndex = lines.findIndex(line =>
-        /montant\s+total|ttc|^(?:total|montant)\s*$|total\s+(\d+\s+)*\d+\s*(?:€|euros?)?|(?:total|eur|montant)\s+\d+\s*(?:€|euros?)?/i.test(line)
-      );
-
-      let capturedLines = [];
-      if (totalLineIndex !== -1) {
-        // Ajouter la ligne "total" elle-même
-        capturedLines.push(lines[totalLineIndex]);
-        
-        // Parcourir les lignes suivantes
-        for (let i = totalLineIndex + 1; i < lines.length; i++) {
-          // Si la ligne contient des lettres, on s'arrête
-          if (/[a-zA-ZÀ-ÿ]/.test(lines[i])) {
-            break;
+  let montant, montantLine;
+    if (/^CARTE BANCAIRE/i.test(lines.join('\n'))) {
+        // Extraire directement le montant qui finit par EUR ou €
+         montantLine = lines.find(line =>
+          /\d+[.,]?\d*\s*(?:€|eur)$/i.test(line)
+        );
+        if (montantLine) {
+          // Extraire le nombre de la ligne
+             montant = montantLine.match(/(\d+[.,]?\d*)/)?.[1];
+          if (montant) {
+            // Normaliser (remplacer virgule par point)
+            montant = montant.replace(',', '.');
+            // Utiliser directement le montant
+            console.log("Montant trouvé:", montant);
+            // Votre code pour utiliser le montant...
           }
-          // Sinon on ajoute la ligne
-          capturedLines.push(lines[i]);
         }
       }
+      else{
+          //On va capturer toutes suivant ces criètres jusqu'à rencontrer des lignes contenant de nouveau des mots 
+          let totalLineIndex = lines.findIndex(line =>
+            /montant\s+total|ttc|^(?:total|montant)\s*$|total\s+(\d+\s+)*\d+\s*(?:€|euros?)?|(?:total|eur|montant)\s+\d+\s*(?:€|euros?)?/i.test(line)
+          );
 
+          let capturedLines = [];
+          if (totalLineIndex !== -1) {
+            // Ajouter la ligne "total" elle-même
+            capturedLines.push(lines[totalLineIndex]);
+            
+            // Parcourir les lignes suivantes
+            for (let i = totalLineIndex + 1; i < lines.length; i++) {
+              // Si la ligne contient des lettres, on s'arrête
+              if (/[a-zA-ZÀ-ÿ]/.test(lines[i])) {
+                break;
+              }
+              // Sinon on ajoute la ligne
+              capturedLines.push(lines[i]);
+                  }
+            }
+
+            
+            console.log("capturedLines : "+ capturedLines);
+            let highestNumber = Math.max(...capturedLines.flatMap(line => line.match(/\d+[.,]?\d*/g) || []).map(n => parseFloat(n.replace(',', '.'))));
+            console.log("highestNumber found : "+ highestNumber); 
+            montant =highestNumber;
+      }
       
-      console.log("capturedLines : "+ capturedLines);
-      let highestNumber = Math.max(...capturedLines.flatMap(line => line.match(/\d+[.,]?\d*/g) || []).map(n => parseFloat(n.replace(',', '.'))));
-       console.log("highestNumber found : "+ highestNumber); 
-     
-        if (highestNumber) {
+        if (montant) {
         //const match = totalLine.match(/\d+[.,]\d{2}/);
-        return highestNumber;
+        return montant;
         }else return null;
 }
 
