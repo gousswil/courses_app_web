@@ -19,6 +19,14 @@ class _ExpenseFormState extends State<ExpenseForm> {
   DateTime _selectedDate = DateTime.now();
   String? _ocrSummary;
 
+    bool _showMobileOptions = false;
+
+    bool get _isMobile {
+      final userAgent = html.window.navigator.userAgent.toLowerCase();
+      return userAgent.contains('android') || userAgent.contains('iphone') || userAgent.contains('ipad');
+    }
+
+
   @override
   void dispose() {
     _amountController.dispose();
@@ -27,55 +35,63 @@ class _ExpenseFormState extends State<ExpenseForm> {
     super.dispose();
   }
 
-     void _uploadAndScanImage() {
-          final uploadInput = html.FileUploadInputElement();
-
-          uploadInput.accept = 'image/*';
-
-          // ✅ Permet de déclencher la caméra sur mobile
-         /*  uploadInput.setAttribute('capture', 'environment'); */
-
-          uploadInput.click();
-
-          uploadInput.onChange.listen((event) {
-            final file = uploadInput.files?.first;
-            if (file == null) return;
-
-            final reader = html.FileReader();
-            reader.readAsDataUrl(file);
-
-            reader.onLoadEnd.listen((event) {
-              final base64Image = reader.result as String;
-              final callbackId = 'ocr_callback_${DateTime.now().millisecondsSinceEpoch}';
-              final eventKey = "ocrResult-$callbackId";
-
-              print('📡 Écoute du callback : $eventKey');
-
-              html.EventListener? listener;
-
-              listener = allowInterop((e) {
-                print('✅ Callback reçu : $eventKey');
-
-                final customEvent = e as html.CustomEvent;
-                final text = customEvent.detail as String;
-                print('🧾 Texte OCR détecté :\n$text');
-
-                updateFormFieldsFromOCR(text);
-
-                html.window.removeEventListener(eventKey, listener);
-              });
-
-              html.window.addEventListener(eventKey, listener);
-
-              if (!js.context.hasProperty('callVisionAPI')) {
-                print("❌ Fonction callVisionAPI non disponible !");
-                return;
-              }
-
-              js.context.callMethod('callVisionAPI', [base64Image, callbackId]);
-            });
+      void _onScanTicketPressed() {
+        if (_isMobile) {
+          setState(() {
+            _showMobileOptions = true;
           });
+        } else {
+          _uploadAndScanImage();
         }
+      }
+
+     void _uploadAndScanImage({bool useCamera = false}) {
+        final uploadInput = html.FileUploadInputElement();
+        uploadInput.accept = 'image/*';
+
+        if (useCamera) {
+          uploadInput.setAttribute('capture', 'environment'); // ou 'user' pour caméra frontale
+        }
+
+        uploadInput.click();
+
+        uploadInput.onChange.listen((event) {
+          final file = uploadInput.files?.first;
+          if (file == null) return;
+
+          final reader = html.FileReader();
+          reader.readAsDataUrl(file);
+
+          reader.onLoadEnd.listen((event) {
+            final base64Image = reader.result as String;
+            final callbackId = 'ocr_callback_${DateTime.now().millisecondsSinceEpoch}';
+            final eventKey = "ocrResult-$callbackId";
+
+            html.EventListener? listener;
+
+            listener = allowInterop((e) {
+              final customEvent = e as html.CustomEvent;
+              final text = customEvent.detail as String;
+              updateFormFieldsFromOCR(text);
+              html.window.removeEventListener(eventKey, listener);
+            });
+
+            html.window.addEventListener(eventKey, listener);
+
+            if (!js.context.hasProperty('callVisionAPI')) {
+              print("❌ Fonction callVisionAPI non disponible !");
+              return;
+            }
+
+            js.context.callMethod('callVisionAPI', [base64Image, callbackId]);
+          });
+
+          setState(() {
+            _showMobileOptions = false;
+          });
+        });
+      }
+
 
 
       void updateFormFieldsFromOCR(String jsonString) {
@@ -179,63 +195,75 @@ class _ExpenseFormState extends State<ExpenseForm> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Ajouter une dépense')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
-            ElevatedButton.icon(
-              onPressed: _uploadAndScanImage,
-              icon: const Icon(Icons.photo_camera),
-              label: const Text('Scanner un ticket'),
-            ),
-            if (_ocrSummary != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 16.0),
-                child: Text(
-                  _ocrSummary!,
-                  style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+      Widget build(BuildContext context) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('Ajouter une dépense')),
+          body: Padding(
+            padding: const EdgeInsets.all(16),
+            child: ListView(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _onScanTicketPressed,
+                  icon: const Icon(Icons.photo_camera),
+                  label: const Text('Scanner un ticket'),
                 ),
-              ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _amountController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Montant (€)'),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedCategory,
-              decoration: const InputDecoration(labelText: 'Catégorie'),
-              items: const [
-                DropdownMenuItem(value: 'Alimentaire', child: Text('Alimentaire')),
-                DropdownMenuItem(value: 'Transport', child: Text('Transport')),
-                DropdownMenuItem(value: 'Hygiène', child: Text('Hygiène')),
-                DropdownMenuItem(value: 'Autre', child: Text('Autre')),
+                if (_showMobileOptions) ...[
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () => _uploadAndScanImage(useCamera: true),
+                    child: const Text('📷 Prendre une photo'),
+                  ),
+                  const SizedBox(height: 4),
+                  ElevatedButton(
+                    onPressed: () => _uploadAndScanImage(useCamera: false),
+                    child: const Text('📁 Choisir un fichier'),
+                  ),
+                ],
+                if (_ocrSummary != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    child: Text(
+                      _ocrSummary!,
+                      style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+                    ),
+                  ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Montant (€)'),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedCategory,
+                  decoration: const InputDecoration(labelText: 'Catégorie'),
+                  items: const [
+                    DropdownMenuItem(value: 'Alimentaire', child: Text('Alimentaire')),
+                    DropdownMenuItem(value: 'Transport', child: Text('Transport')),
+                    DropdownMenuItem(value: 'Hygiène', child: Text('Hygiène')),
+                    DropdownMenuItem(value: 'Autre', child: Text('Autre')),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedCategory = value!;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _dateController,
+                  readOnly: true,
+                  decoration: const InputDecoration(labelText: 'Date'),
+                  onTap: _pickDate,
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton(
+                  onPressed: _saveExpense,
+                  child: const Text('Ajouter la dépense'),
+                ),
               ],
-              onChanged: (value) {
-                setState(() {
-                  _selectedCategory = value!;
-                });
-              },
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _dateController,
-              readOnly: true,
-              decoration: const InputDecoration(labelText: 'Date'),
-              onTap: _pickDate,
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: _saveExpense,
-              child: const Text('Ajouter la dépense'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+          ),
+        );
+      }
 }
