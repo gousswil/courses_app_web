@@ -72,16 +72,15 @@ class _ExpenseFormState extends State<ExpenseForm> {
 
             html.EventListener? listener;
          
-          listener = allowInterop((e) {
+            listener = allowInterop((e) {
               final customEvent = e as html.CustomEvent;
               final text = customEvent.detail as String;
 
               updateFormFieldsFromOCR(text);
-
-              setState(() {
-                _isAnalyzing = false;
-              });
-
+              // ✅ On stoppe le témoin de chargement ici
+                setState(() {
+                  _isAnalyzing = false;
+                });
               if (listener != null) {
                 html.window.removeEventListener(eventKey, listener!);
               }
@@ -89,13 +88,15 @@ class _ExpenseFormState extends State<ExpenseForm> {
 
             html.window.addEventListener(eventKey, listener);
 
+             setState(() {
+                _isAnalyzing = true;
+                _ocrSummary = null;
+              });
             if (!js.context.hasProperty('callVisionAPI')) {
               print("❌ Fonction callVisionAPI non disponible !");
               return;
             }
-               setState(() {
-                _isAnalyzing = true;
-              });
+              
             js.context.callMethod('callVisionAPI', [base64Image, callbackId]);
           });
 
@@ -217,63 +218,40 @@ class _ExpenseFormState extends State<ExpenseForm> {
             child: ListView(
               children: [
                 ElevatedButton.icon(
-                  onPressed: () {
-                      if (isSmallScreen) {
-                        setState(() {
-                          _showMobileOptions = !_showMobileOptions;
-                        });
-                      } else {
-                        _uploadAndScanImage(useCamera: false);
-                        setState(() {
-                          _isAnalyzing = true;
-                          _ocrSummary = null;
-                        });
-                      }
-                    },
-                  /* _onScanTicketPressed, */
+                  onPressed: _isAnalyzing
+                      ? null // 🔒 Désactive le bouton si analyse en cours
+                      : () {
+                          if (isSmallScreen) {
+                            setState(() {
+                              _showMobileOptions = !_showMobileOptions;
+                            });
+                          } else {
+                            _uploadAndScanImage(useCamera: false);
+                          }
+                        },
                   icon: const Icon(Icons.photo_camera),
                   label: const Text('Scanner un ticket'),
                 ),
-                if (_showMobileOptions) ...[
+               if (_showMobileOptions && !_isAnalyzing) ...[
                   const SizedBox(height: 8),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      _uploadAndScanImage(useCamera: true); // Caméra
-                      setState(() {
-                        _isAnalyzing = true;
-                        _ocrSummary = null;
-                        _showMobileOptions = false; // On masque après clic
-                      });
-                    },
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('📷 Prendre une photo'),
+                  ElevatedButton(
+                    onPressed: () => _uploadAndScanImage(useCamera: true),
+                    child: const Text('📷 Prendre une photo'),
                   ),
                   const SizedBox(height: 4),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      _uploadAndScanImage(useCamera: false); // Fichier
-                      setState(() {
-                        _isAnalyzing = true;
-                        _ocrSummary = null;
-                        _showMobileOptions = false; // On masque après clic
-                      });
-                    },
-                    icon: const Icon(Icons.folder),
-                    label: const Text('📁 Choisir un fichier'),
+                  ElevatedButton(
+                    onPressed: () => _uploadAndScanImage(useCamera: false),
+                    child: const Text('📁 Choisir un fichier'),
                   ),
                 ],
                 if (_isAnalyzing)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         CircularProgressIndicator(),
                         SizedBox(width: 12),
-                        Text(
-                          'Analyse du ticket en cours...',
-                          style: TextStyle(fontStyle: FontStyle.italic),
-                        ),
+                        Text('Analyse du ticket en cours...'),
                       ],
                     ),
                   ),
