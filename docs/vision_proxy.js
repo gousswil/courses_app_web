@@ -79,6 +79,7 @@ function analyzeTicketText(text) {
     'monoprix': 'Alimentaire',
     'leclerc': 'Alimentaire',
     'biocoop': 'Alimentaire',
+    'U) express': 'Alimentaire',
     'picard': 'Alimentaire',
     'pharmacie': 'Santé',
     'docteur': 'Santé',
@@ -118,7 +119,7 @@ function extractTotal(text) {
   const lines = text.split('\n');
       //On va capturer toutes suivant ces criètres jusqu'à rencontrer des lignes contenant de nouveau des mots 
     let totalLineIndex = lines.findIndex(line =>
-        /^(?:total|montant)\s*$|total\s+(\d+\s+)*\d+\s*(?:€|euros?)?|(?:total|ttc|eur|montant)\s+\d+\s*(?:€|euros?)?/i.test(line)
+        /^(?:total|montant|ttc)\s*$|total\s+(\d+\s+)*\d+\s*(?:€|euros?)?|(?:total|ttc|eur|montant)\s+\d+\s*(?:€|euros?)?/i.test(line)
       );
 
       let capturedLines = [];
