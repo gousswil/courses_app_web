@@ -33,7 +33,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
           uploadInput.accept = 'image/*';
 
           // ✅ Permet de déclencher la caméra sur mobile
-          uploadInput.setAttribute('capture', 'environment');
+         /*  uploadInput.setAttribute('capture', 'environment'); */
 
           uploadInput.click();
 

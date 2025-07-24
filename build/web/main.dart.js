@@ -38474,7 +38474,6 @@ r.y2$=0
 s.au()},
 acW(){var s=A.aE2("file")
 s.accept="image/*"
-s.setAttribute("capture","environment")
 s.click()
 A.awf(s,"change",new A.ahk(this,s),!1)},
 ala(a){var s,r,q,p,o,n,m,l,k,j,i,h
