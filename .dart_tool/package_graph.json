@@ -9,6 +9,7 @@
       "dependencies": [
         "cupertino_icons",
         "flutter",
+        "idb_shim",
         "js",
         "shared_preferences"
       ],
@@ -381,6 +382,31 @@
         "meta",
         "path"
       ]
+    },
+    {
+      "name": "idb_shim",
+      "version": "2.6.7",
+      "dependencies": [
+        "collection",
+        "meta",
+        "path",
+        "sembast",
+        "web"
+      ]
+    },
+    {
+      "name": "sembast",
+      "version": "3.8.5+1",
+      "dependencies": [
+        "meta",
+        "path",
+        "synchronized"
+      ]
+    },
+    {
+      "name": "synchronized",
+      "version": "3.4.0",
+      "dependencies": []
     }
   ],
   "configVersion": 1

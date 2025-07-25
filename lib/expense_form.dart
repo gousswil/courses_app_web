@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:html' as html;
 import 'dart:convert';
+import 'dart:typed_data';
 import 'dart:js' as js;
 import 'package:js/js_util.dart' show allowInterop;
-
+import 'services/indexeddb_service.dart';
 
 class ExpenseForm extends StatefulWidget {
   const ExpenseForm({super.key});
@@ -16,12 +17,16 @@ class _ExpenseFormState extends State<ExpenseForm> {
   final _amountController = TextEditingController();
   final _dateController = TextEditingController();
   final _categoryController = TextEditingController();
+  final IndexedDbService _indexedDbService = IndexedDbService();
+
   bool _isAnalyzing = false;
+  
 
   String _selectedCategory = 'Alimentaire';
   DateTime _selectedDate = DateTime.now();
   String? _ocrSummary;
   String? _ticketImageBase64;
+  String? _ticketImageId;
 
 
     bool _showMobileOptions = false;
@@ -32,6 +37,11 @@ class _ExpenseFormState extends State<ExpenseForm> {
       return userAgent.contains('android') || userAgent.contains('iphone') || userAgent.contains('ipad');
     }
 
+    @override
+    void initState() {
+      super.initState();
+      _indexedDbService.init(); // 🔑 Initialisation de IndexedDB
+    }
 
   @override
   void dispose() {
@@ -67,45 +77,78 @@ class _ExpenseFormState extends State<ExpenseForm> {
 
           final reader = html.FileReader();
           reader.readAsDataUrl(file);
+           reader.onLoadEnd.listen((event) {
+              final base64Image = reader.result as String;
+              _ticketImageBase64 = base64Image;
 
-          reader.onLoadEnd.listen((event) {
-            final base64Image = reader.result as String;
-            _ticketImageBase64 = base64Image;
-            final callbackId = 'ocr_callback_${DateTime.now().millisecondsSinceEpoch}';
-            final eventKey = "ocrResult-$callbackId";
+              final callbackId = 'ocr_callback_${DateTime.now().millisecondsSinceEpoch}';
+              final eventKey = "ocrResult-$callbackId";
 
-            html.EventListener? listener;
-         
-            listener = allowInterop((e) {
-              final customEvent = e as html.CustomEvent;
-              final text = customEvent.detail as String;
-              final compressedImage = customEvent.detail as String;
+              html.EventListener? listener;
 
-              updateFormFieldsFromOCR(text);
-              // ✅ On stoppe le témoin de chargement ici
+              listener = allowInterop((e) async {
+                final customEvent = e as html.CustomEvent;
+                final detail = customEvent.detail as Map;
+
+                final text = detail['text'] as String;
+                final compressedBase64 = detail['compressedImage'] as String;
+
+                // ✅ Créer un ID unique pour l'image
+                final imageId = 'ticket_${DateTime.now().millisecondsSinceEpoch}';
+
+                // ✅ Convertir et sauvegarder dans IndexedDB
+                final Uint8List imageBytes = base64Decode(
+                  compressedBase64.split(',').last,
+                );
+                await _indexedDbService.saveImage(imageId, imageBytes); // Instance globale du service
+
+                // ✅ Créer la dépense avec miniature et imageId
+                final expense = {
+                  'amount': _amountController.text,
+                  'category': _selectedCategory,
+                  'date': _selectedDate.toIso8601String(),
+                  'thumbnail': 'data:image/webp;base64,$compressedBase64',
+                  'imageId': imageId,
+                };
+
+                // ✅ Enregistrer dans localStorage
+                final List<String> expenses = (html.window.localStorage['expenses'] != null)
+                    ? List<String>.from(json.decode(html.window.localStorage['expenses']!))
+                    : [];
+                expenses.add(json.encode(expense));
+                html.window.localStorage['expenses'] = json.encode(expenses);
+
+                // ✅ Mettre à jour les champs à partir de l’OCR
+                updateFormFieldsFromOCR(text);
+
+                // ✅ Réinitialiser l’état
                 setState(() {
                   _isAnalyzing = false;
                 });
+
+                // ✅ Nettoyer le listener
                 if (listener != null) {
-                  html.window.removeEventListener(eventKey, listener!);
+                  html.window.removeEventListener(eventKey, listener);
                 }
-            });
+              });
 
-            html.window.addEventListener(eventKey, listener);
+              // ✅ Attacher le listener
+              html.window.addEventListener(eventKey, listener);
 
-             setState(() {
+              // ✅ Déclencher l'état d'analyse
+              setState(() {
                 _isAnalyzing = true;
                 _ocrSummary = null;
               });
-            if (!js.context.hasProperty('callVisionAPI')) {
-              print("❌ Fonction callVisionAPI non disponible !");
-              return;
-            }
-              
-            /* js.context.callMethod('callVisionAPI', [base64Image, callbackId]); */
-            js.context.callMethod('compressAndSendToVisionAPI', [base64Image, callbackId]);
 
-          });
+              // ✅ Lancer l’appel JS
+              if (!js.context.hasProperty('compressAndSendToVisionAPI')) {
+                print("❌ Fonction compressAndSendToVisionAPI non disponible !");
+                return;
+              }
+
+              js.context.callMethod('compressAndSendToVisionAPI', [base64Image, callbackId]);
+            });         
 
           setState(() {
             _showMobileOptions = false;
@@ -176,9 +219,9 @@ class _ExpenseFormState extends State<ExpenseForm> {
     final expense = {
       'amount': amount,
       'category': _selectedCategory,
-      'date': _selectedDate.toIso8601String(),
-      'thumbnail': compressedBase64, // ✅ miniature WebP
-      'imageId': imageId, // On y revient
+      'date': _selectedDate.toIso8601String()
+      /* 'thumbnail': compressedBase64,  */// ✅ miniature WebP
+      /* 'imageId': imageId, */ // On y revient
     };
 
     final List<String> expenses =

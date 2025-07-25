@@ -74,6 +74,12 @@
       "languageVersion": "3.7"
     },
     {
+      "name": "idb_shim",
+      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/idb_shim-2.6.7",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
+    },
+    {
       "name": "js",
       "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/js-0.6.7",
       "packageUri": "lib/",
@@ -152,6 +158,12 @@
       "languageVersion": "3.0"
     },
     {
+      "name": "sembast",
+      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/sembast-3.8.5+1",
+      "packageUri": "lib/",
+      "languageVersion": "3.7"
+    },
+    {
       "name": "shared_preferences",
       "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/shared_preferences-2.5.3",
       "packageUri": "lib/",
@@ -222,6 +234,12 @@
       "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/string_scanner-1.4.1",
       "packageUri": "lib/",
       "languageVersion": "3.1"
+    },
+    {
+      "name": "synchronized",
+      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/synchronized-3.4.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
     },
     {
       "name": "term_glyph",
