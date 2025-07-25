@@ -20,6 +20,8 @@ class _ExpenseFormState extends State<ExpenseForm> {
   String _selectedCategory = 'Alimentaire';
   DateTime _selectedDate = DateTime.now();
   String? _ocrSummary;
+  String? _ticketImageBase64;
+
 
     bool _showMobileOptions = false;
     
@@ -67,6 +69,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
 
           reader.onLoadEnd.listen((event) {
             final base64Image = reader.result as String;
+            _ticketImageBase64 = base64Image;
             final callbackId = 'ocr_callback_${DateTime.now().millisecondsSinceEpoch}';
             final eventKey = "ocrResult-$callbackId";
 
@@ -170,7 +173,8 @@ class _ExpenseFormState extends State<ExpenseForm> {
       'amount': amount,
       'category': _selectedCategory,
       'date': _selectedDate.toIso8601String(),
-    };
+      'imageBase64': _ticketImageBase64, // 🧾 on ajoute l'image ici
+      };
 
     final List<String> expenses =
         (html.window.localStorage['expenses'] != null)
