@@ -85,34 +85,28 @@ class _ExpenseFormState extends State<ExpenseForm> {
               final eventKey = "ocrResult-$callbackId";
 
               html.EventListener? listener;
-
               listener = allowInterop((e) async {
                 final customEvent = e as html.CustomEvent;
                 final detail = customEvent.detail as Map;
 
-                final text = detail['text'] as String;
-                final compressedBase64 = detail['compressedImage'] as String;
-
+                final compressedBase64 = (detail['compressedImage'] as String?) ?? '';
                 final imageId = 'ticket_${DateTime.now().millisecondsSinceEpoch}';
-                final Uint8List imageBytes = base64Decode(compressedBase64.split(',').last);
 
+                final Uint8List imageBytes = base64Decode(compressedBase64.split(',').last);
                 final service = IndexedDbService();
                 await service.init();
-                final expenses = await service.getAllExpenses(); // Tu dois créer cette méthode
-
                 await service.saveImage(imageId, imageBytes);
 
+                // Créer la dépense avec les champs détectés
                 final expense = {
-                  'amount': _amountController.text,
-                  'category': _selectedCategory,
-                  'date': _selectedDate.toIso8601String(),
-                  'thumbnail': 'data:image/webp;base64,$compressedBase64',
+                  'amount': detail['amount'] ?? '',
+                  'category': detail['category'] ?? '',
+                  'date': detail['date'] ?? DateTime.now().toIso8601String(),
+                  'thumbnail': compressedBase64,
                   'imageId': imageId,
                 };
 
-                await service.saveExpense(expense); // ✅ on enregistre dans IndexedDB
-
-                updateFormFieldsFromOCR(text);
+                await service.addExpense(expense); // ✅ uniquement dans IndexedDB
 
                 setState(() {
                   _isAnalyzing = false;
@@ -122,6 +116,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                   html.window.removeEventListener(eventKey, listener);
                 }
               });
+
 
               html.window.addEventListener(eventKey, listener);
 
@@ -145,46 +140,58 @@ class _ExpenseFormState extends State<ExpenseForm> {
         });
       }
 
-    void updateFormFieldsFromOCR(String text) {
-          print('🔍 Texte OCR brut : $text');
+      void updateFormFieldsFromOCR(String jsonString) {
+        print("🧠 updateFormFieldsFromOCR appelé");
+        print("📦 JSON OCR d'origine reçu : $jsonString");
 
-          final dateRegex = RegExp(r'(\d{2}[\/\-\.]\d{2}[\/\-\.]\d{2,4})');
-          final amountRegex = RegExp(r'(\d+([.,]\d{2}))');
-          final categoryRegex = RegExp(r'(alimentation|loisir|transport|santé|logement)', caseSensitive: false);
+        try {
+          
+          final String? montant = RegExp(r'"total"\s*:\s*"?([^",}]+)"?').firstMatch(jsonString)?.group(1)?.replaceAll(',', '.') ?? '';
+          final String? dateString = RegExp(r'"date"\s*:\s*"?([^",}]+)"?').firstMatch(jsonString)?.group(1) ?? '';
+          final String? category = RegExp(r'"category"\s*:\s*"?([^",}]+)"?').firstMatch(jsonString)?.group(1) ?? '';
+          /* final String fullText = data['text']; */
 
-          // ✅ Cherche une date
-          final dateMatch = dateRegex.firstMatch(text);
-          if (dateMatch != null) {
-            final rawDate = dateMatch.group(1)!;
+        /*   print('🧾 Texte complet : $fullText');
+
+          print('Montant seul : $montant'); */
+
+          DateTime? parsedDate;
+          if (dateString != null) {
             try {
-              // Gère plusieurs formats
-              final parsedDate = _parseDate(rawDate);
-              setState(() {
-                _selectedDate = parsedDate;
-              });
+              parsedDate = DateTime.parse(dateString);
             } catch (e) {
-              print('❌ Erreur de parsing de la date : $e');
+              print("⚠️ Erreur de parsing de la date : $e");
             }
-          } else {
-            print("❌ Aucune date détectée");
           }
 
-          // ✅ Montant
-          final amountMatch = amountRegex.allMatches(text).lastOrNull;
-          if (amountMatch != null) {
-            final amountStr = amountMatch.group(1)!.replaceAll(',', '.');
-            _amountController.text = amountStr;
-          }
+          setState(() {
+            if (montant != null) {
+              _amountController.text = (montant ?? '').toString().replaceAll(RegExp(r'[^\d.,]'), '');
+              /*  print("💰 Montant détecté pb : ${montant?.toString() ?? 'null'}");*/
+            } else {
+              print("❌ Aucun montant détecté");
+            }
 
-          // ✅ Catégorie
-          final categoryMatch = categoryRegex.firstMatch(text);
-          if (categoryMatch != null) {
-            _selectedCategory = categoryMatch.group(0)!.toLowerCase();
+            if (parsedDate != null) {
+              _selectedDate = parsedDate;
+              _dateController.text = '${parsedDate.day}/${parsedDate.month}/${parsedDate.year}';
+              print("📅 Date détectée : $_selectedDate");
+            } else {
+              print("❌ Aucune date détectée");
+            }
+
+            _selectedCategory = category ?? 'Autre';
             print("🏷️ Catégorie détectée : $_selectedCategory");
-          } else {
-            print("🏷️ Catégorie non reconnue");
-          }
+
+            _ocrSummary = "💡 Dépense détectée : "
+                "${montant != null ? '$montant €' : 'montant inconnu'}, "
+                "${_selectedCategory}, "
+                "${parsedDate != null ? 'le ${_dateController.text}' : 'date inconnue'}.";
+          });
+        } catch (e) {
+          print("❌ Erreur lors de l'analyse JSON : $e");
         }
+      }
 
 
     DateTime _parseDate(String rawDate) {

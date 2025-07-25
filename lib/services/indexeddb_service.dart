@@ -8,6 +8,8 @@ class IndexedDbService {
   static const _dbVersion = 1;
   static const _imageStore = 'images';
   static const _expenseStore = 'expenses';
+  static const String imageStoreName = 'images';
+  static const String expenseStoreName = 'expenses';
 
   Database? _database;
 
@@ -67,5 +69,15 @@ class IndexedDbService {
     await txn2.completed;
   }
 
+    Future<void> addExpense(Map<String, dynamic> expense) async {
+      if (_database == null) {
+        throw Exception('IndexedDB non initialisé');
+      }
+      final txn = _database!.transaction(expenseStoreName, 'readwrite');
+
+      final store = txn.objectStore(expenseStoreName);
+      await store.add(expense);
+      await txn.completed;
+    }
 
 }
