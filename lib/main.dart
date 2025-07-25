@@ -11,7 +11,7 @@ import 'pages/login_page.dart';
 
     void main() async {
       WidgetsFlutterBinding.ensureInitialized();
-      
+      try {
       // Initialiser Firebase
       await Firebase.initializeApp(
         options: const FirebaseOptions(
@@ -25,9 +25,13 @@ import 'pages/login_page.dart';
           measurementId: "G-DC7199X8V6"
         ),
       );
+      print("✅ Firebase initialisé");
       
+      } catch (e) {
+    print("❌ Erreur Firebase: $e");
+  }
       runApp(const CoursesApp());
-    }
+  }
 
 class CoursesApp extends StatelessWidget {
   const CoursesApp({Key? key}) : super(key: key);
