@@ -24,6 +24,7 @@ class _ExpenseHistoryPageState extends State<ExpenseHistoryPage> {
   Future<void> _loadExpenses() async {
     await _service.init();
     final loadedExpenses = await _service.getAllExpenses();
+    print("LoadedExpense $loadedExpenses");
     setState(() {
       _expenses = loadedExpenses;
       _isLoading = false;
