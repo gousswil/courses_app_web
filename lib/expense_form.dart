@@ -156,60 +156,70 @@ class _ExpenseFormState extends State<ExpenseForm> {
         });
       }
 
+    void updateFormFieldsFromOCR(String text) {
+          print('🔍 Texte OCR brut : $text');
 
+          final dateRegex = RegExp(r'(\d{2}[\/\-\.]\d{2}[\/\-\.]\d{2,4})');
+          final amountRegex = RegExp(r'(\d+([.,]\d{2}))');
+          final categoryRegex = RegExp(r'(alimentation|loisir|transport|santé|logement)', caseSensitive: false);
 
-      void updateFormFieldsFromOCR(String jsonString) {
-        print("🧠 updateFormFieldsFromOCR appelé");
-        print("📦 JSON OCR d'origine reçu : $jsonString");
-
-        try {
-          
-          final String? montant = RegExp(r'"total"\s*:\s*"?([^",}]+)"?').firstMatch(jsonString)?.group(1)?.replaceAll(',', '.') ?? '';
-          final String? dateString = RegExp(r'"date"\s*:\s*"?([^",}]+)"?').firstMatch(jsonString)?.group(1) ?? '';
-          final String? category = RegExp(r'"category"\s*:\s*"?([^",}]+)"?').firstMatch(jsonString)?.group(1) ?? '';
-          /* final String fullText = data['text']; */
-
-        /*   print('🧾 Texte complet : $fullText');
-
-          print('Montant seul : $montant'); */
-
-          DateTime? parsedDate;
-          if (dateString != null) {
+          // ✅ Cherche une date
+          final dateMatch = dateRegex.firstMatch(text);
+          if (dateMatch != null) {
+            final rawDate = dateMatch.group(1)!;
             try {
-              parsedDate = DateTime.parse(dateString);
+              // Gère plusieurs formats
+              final parsedDate = _parseDate(rawDate);
+              setState(() {
+                _selectedDate = parsedDate;
+              });
             } catch (e) {
-              print("⚠️ Erreur de parsing de la date : $e");
+              print('❌ Erreur de parsing de la date : $e');
             }
+          } else {
+            print("❌ Aucune date détectée");
           }
 
-          setState(() {
-            if (montant != null) {
-              _amountController.text = (montant ?? '').toString().replaceAll(RegExp(r'[^\d.,]'), '');
-              /*  print("💰 Montant détecté pb : ${montant?.toString() ?? 'null'}");*/
-            } else {
-              print("❌ Aucun montant détecté");
-            }
+          // ✅ Montant
+          final amountMatch = amountRegex.allMatches(text).lastOrNull;
+          if (amountMatch != null) {
+            final amountStr = amountMatch.group(1)!.replaceAll(',', '.');
+            _amountController.text = amountStr;
+          }
 
-            if (parsedDate != null) {
-              _selectedDate = parsedDate;
-              _dateController.text = '${parsedDate.day}/${parsedDate.month}/${parsedDate.year}';
-              print("📅 Date détectée : $_selectedDate");
-            } else {
-              print("❌ Aucune date détectée");
-            }
-
-            _selectedCategory = category ?? 'Autre';
+          // ✅ Catégorie
+          final categoryMatch = categoryRegex.firstMatch(text);
+          if (categoryMatch != null) {
+            _selectedCategory = categoryMatch.group(0)!.toLowerCase();
             print("🏷️ Catégorie détectée : $_selectedCategory");
+          } else {
+            print("🏷️ Catégorie non reconnue");
+          }
+        }
 
-            _ocrSummary = "💡 Dépense détectée : "
-                "${montant != null ? '$montant €' : 'montant inconnu'}, "
-                "${_selectedCategory}, "
-                "${parsedDate != null ? 'le ${_dateController.text}' : 'date inconnue'}.";
-          });
-        } catch (e) {
-          print("❌ Erreur lors de l'analyse JSON : $e");
+
+    DateTime _parseDate(String rawDate) {
+      // Gère formats du type : 12/07/2025, 12-07-25, 12.07.2025
+      final separators = ['/', '-', '.'];
+      for (final sep in separators) {
+        if (rawDate.contains(sep)) {
+          final parts = rawDate.split(sep);
+          if (parts.length == 3) {
+            final day = int.tryParse(parts[0]);
+            final month = int.tryParse(parts[1]);
+            var year = int.tryParse(parts[2]);
+            if (year != null && year < 100) {
+              year += 2000; // Corrige les années en deux chiffres
+            }
+            if (day != null && month != null && year != null) {
+              return DateTime(year, month, day);
+            }
+          }
         }
       }
+      throw FormatException('Format de date non reconnu : $rawDate');
+    }
+
 
 
   void _saveExpense() {
