@@ -77,7 +77,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
 
           final reader = html.FileReader();
           reader.readAsDataUrl(file);
-           reader.onLoadEnd.listen((event) {
+          reader.onLoadEnd.listen((event) async {
               final base64Image = reader.result as String;
               _ticketImageBase64 = base64Image;
 
@@ -93,16 +93,15 @@ class _ExpenseFormState extends State<ExpenseForm> {
                 final text = detail['text'] as String;
                 final compressedBase64 = detail['compressedImage'] as String;
 
-                // ✅ Créer un ID unique pour l'image
                 final imageId = 'ticket_${DateTime.now().millisecondsSinceEpoch}';
+                final Uint8List imageBytes = base64Decode(compressedBase64.split(',').last);
 
-                // ✅ Convertir et sauvegarder dans IndexedDB
-                final Uint8List imageBytes = base64Decode(
-                  compressedBase64.split(',').last,
-                );
-                await _indexedDbService.saveImage(imageId, imageBytes); // Instance globale du service
+                final service = IndexedDbService();
+                await service.init();
+                final expenses = await service.getAllExpenses(); // Tu dois créer cette méthode
 
-                // ✅ Créer la dépense avec miniature et imageId
+                await service.saveImage(imageId, imageBytes);
+
                 final expense = {
                   'amount': _amountController.text,
                   'category': _selectedCategory,
@@ -111,44 +110,34 @@ class _ExpenseFormState extends State<ExpenseForm> {
                   'imageId': imageId,
                 };
 
-                // ✅ Enregistrer dans localStorage
-                final List<String> expenses = (html.window.localStorage['expenses'] != null)
-                    ? List<String>.from(json.decode(html.window.localStorage['expenses']!))
-                    : [];
-                expenses.add(json.encode(expense));
-                html.window.localStorage['expenses'] = json.encode(expenses);
+                await service.saveExpense(expense); // ✅ on enregistre dans IndexedDB
 
-                // ✅ Mettre à jour les champs à partir de l’OCR
                 updateFormFieldsFromOCR(text);
 
-                // ✅ Réinitialiser l’état
                 setState(() {
                   _isAnalyzing = false;
                 });
 
-                // ✅ Nettoyer le listener
                 if (listener != null) {
                   html.window.removeEventListener(eventKey, listener);
                 }
               });
 
-              // ✅ Attacher le listener
               html.window.addEventListener(eventKey, listener);
 
-              // ✅ Déclencher l'état d'analyse
               setState(() {
                 _isAnalyzing = true;
                 _ocrSummary = null;
               });
 
-              // ✅ Lancer l’appel JS
               if (!js.context.hasProperty('compressAndSendToVisionAPI')) {
                 print("❌ Fonction compressAndSendToVisionAPI non disponible !");
                 return;
               }
 
               js.context.callMethod('compressAndSendToVisionAPI', [base64Image, callbackId]);
-            });         
+            });
+  
 
           setState(() {
             _showMobileOptions = false;

@@ -16,6 +16,10 @@ class IndexedDbService {
       if (!db.objectStoreNames.contains(_storeName)) {
         db.createObjectStore(_storeName);
       }
+      if (!db.objectStoreNames.contains('expenses')) {
+        db.createObjectStore('expenses', autoIncrement: true);
+      }
+
     });
   }
 
@@ -33,4 +37,22 @@ class IndexedDbService {
     await txn.completed;
     return result;
   }
+
+  Future<void> saveExpense(Map<String, dynamic> expense) async {
+      final db = await _db;
+      final txn = db.transaction('expenses', 'readwrite');
+      final store = txn.objectStore('expenses');
+      await store.add(expense);
+      await txn.completed;
+    }
+
+    Future<List<Map<String, dynamic>>> getAllExpenses() async {
+      final db = await _db;
+      final txn = db.transaction('expenses', 'readonly');
+      final store = txn.objectStore('expenses');
+      final records = await store.getAll();
+      return records.cast<Map<String, dynamic>>();
+    }
+
+
 }
