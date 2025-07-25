@@ -52,34 +52,42 @@ class IndexedDbService {
     await store.add(expense);
     await txn.completed;
   }
-
-    Future<List<Map<String, dynamic>>> getAllExpenses() async {
-        try {
-          final txn = _database!.transaction(_expenseStore, 'readonly');
-          final store = txn.objectStore(_expenseStore);
+      Future<List<Map<String, dynamic>>> getAllExpenses() async {
+      try {
+        final txn = _database!.transaction(_expenseStore, 'readonly');
+        final store = txn.objectStore(_expenseStore);
+        
+        // Cette approche fonctionne et évite les problèmes de boucle infinie
+        final cursors = await store.openCursor(autoAdvance: true).toList();
+        
+        print('Nombre de curseurs récupérés: ${cursors.length}');
+        
+        final expenses = <Map<String, dynamic>>[];
+        
+        for (final cursor in cursors) {
+          print('Curseur - clé: ${cursor.key}, valeur: ${cursor.value}, type: ${cursor.value.runtimeType}');
           
-          final expenses = <Map<String, dynamic>>[];
-          
-          await for (final cursor in store.openCursor()) {
-            if (cursor.value != null && cursor.value is Map) {
-              try {
-                final expense = Map<String, dynamic>.from(cursor.value as Map);
-                expenses.add(expense);
-                print('Expense ajoutée: $expense');
-              } catch (e) {
-                print('Erreur conversion curseur: $e, valeur: ${cursor.value}');
-              }
+          if (cursor.value != null && cursor.value is Map) {
+            try {
+              final expense = Map<String, dynamic>.from(cursor.value as Map);
+              expenses.add(expense);
+              print('Expense ajoutée: $expense');
+            } catch (e) {
+              print('Erreur conversion: $e, valeur: ${cursor.value}');
             }
+          } else {
+            print('Valeur ignorée (null ou pas une Map): ${cursor.value}');
           }
-          
-          print('Total expenses récupérées: ${expenses.length}');
-          return expenses;
-          
-        } catch (e) {
-          print('Erreur dans getAllExpenses: $e');
-          return [];
         }
+        
+        print('Total expenses récupérées: ${expenses.length}');
+        return expenses;
+        
+      } catch (e) {
+        print('Erreur dans getAllExpenses: $e');
+        return [];
       }
+    }
 
     Future<void> addExpense(Map<String, dynamic> expense) async {
       if (_database == null) {
