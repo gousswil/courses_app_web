@@ -2,10 +2,35 @@ import 'package:flutter/material.dart';
 import 'expense_form.dart'; // Assure-toi que ce fichier existe
 import 'expense_history.dart'; 
 import 'ocr_scan.dart'; 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
+import 'services/auth_service.dart';
+import 'pages/login_page.dart';
 
-void main() => runApp(CoursesApp());
+/* void main() => runApp(CoursesApp()); */
+
+    void main() async {
+      WidgetsFlutterBinding.ensureInitialized();
+      
+      // Initialiser Firebase
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+          // Remplacez par VOS vraies valeurs
+           apiKey: "AIzaSyAVu1AgUfipE7lamOCAdknJIrK90gu2heE",
+          authDomain: "courses-25d53.firebaseapp.com",
+          projectId: "courses-25d53",
+          storageBucket: "courses-25d53.firebasestorage.app",
+          messagingSenderId: "966828030779",
+          appId: "1:966828030779:web:bea2ecc6d9c9f3d8a5551e",
+          measurementId: "G-DC7199X8V6"
+        ),
+      );
+      
+      runApp(const CoursesApp());
+    }
 
 class CoursesApp extends StatelessWidget {
+  const CoursesApp({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
