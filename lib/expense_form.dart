@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:js' as js;
 import 'package:js/js_util.dart' show allowInterop;
 
+
 class ExpenseForm extends StatefulWidget {
   const ExpenseForm({super.key});
 
@@ -78,15 +79,16 @@ class _ExpenseFormState extends State<ExpenseForm> {
             listener = allowInterop((e) {
               final customEvent = e as html.CustomEvent;
               final text = customEvent.detail as String;
+              final compressedImage = customEvent.detail as String;
 
               updateFormFieldsFromOCR(text);
               // ✅ On stoppe le témoin de chargement ici
                 setState(() {
                   _isAnalyzing = false;
                 });
-              if (listener != null) {
-                html.window.removeEventListener(eventKey, listener!);
-              }
+                if (listener != null) {
+                  html.window.removeEventListener(eventKey, listener!);
+                }
             });
 
             html.window.addEventListener(eventKey, listener);
@@ -100,7 +102,9 @@ class _ExpenseFormState extends State<ExpenseForm> {
               return;
             }
               
-            js.context.callMethod('callVisionAPI', [base64Image, callbackId]);
+            /* js.context.callMethod('callVisionAPI', [base64Image, callbackId]); */
+            js.context.callMethod('compressAndSendToVisionAPI', [base64Image, callbackId]);
+
           });
 
           setState(() {
@@ -173,8 +177,9 @@ class _ExpenseFormState extends State<ExpenseForm> {
       'amount': amount,
       'category': _selectedCategory,
       'date': _selectedDate.toIso8601String(),
-      'imageBase64': _ticketImageBase64, // 🧾 on ajoute l'image ici
-      };
+      'thumbnail': compressedBase64, // ✅ miniature WebP
+      'imageId': imageId, // On y revient
+    };
 
     final List<String> expenses =
         (html.window.localStorage['expenses'] != null)
