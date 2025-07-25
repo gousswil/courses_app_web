@@ -13,14 +13,12 @@ dependencies:
   cupertino_icons: ^1.0.6
   js: ^0.6.7
   idb_shim: ^2.0.0
-  # Firebase
+  # Versions spécifiques pour Flutter Web
   firebase_core: ^2.24.2
   firebase_auth: ^4.15.3
+  firebase_core_web: ^2.10.0  # Ajoutez cette ligne
+  firebase_auth_web: ^5.8.12  # Ajoutez cette ligne
   
-  # UI helpers (optionnel)
-  firebase_ui_auth: ^1.9.5
-  
-  # State management
   provider: ^6.1.1
 
 dev_dependencies:

@@ -8,12 +8,6 @@
       "languageVersion": "3.2"
     },
     {
-      "name": "args",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/args-2.7.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.3"
-    },
-    {
       "name": "async",
       "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/async-2.13.0",
       "packageUri": "lib/",
@@ -44,28 +38,10 @@
       "languageVersion": "3.4"
     },
     {
-      "name": "crypto",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/crypto-3.0.6",
-      "packageUri": "lib/",
-      "languageVersion": "3.4"
-    },
-    {
       "name": "cupertino_icons",
       "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/cupertino_icons-1.0.8",
       "packageUri": "lib/",
       "languageVersion": "3.1"
-    },
-    {
-      "name": "desktop_webview_auth",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/desktop_webview_auth-0.0.15",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
-      "name": "email_validator",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/email_validator-2.1.17",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
     },
     {
       "name": "fake_async",
@@ -122,58 +98,10 @@
       "languageVersion": "3.4"
     },
     {
-      "name": "firebase_dynamic_links",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/firebase_dynamic_links-5.5.7",
-      "packageUri": "lib/",
-      "languageVersion": "2.18"
-    },
-    {
-      "name": "firebase_dynamic_links_platform_interface",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/firebase_dynamic_links_platform_interface-0.2.6+35",
-      "packageUri": "lib/",
-      "languageVersion": "2.18"
-    },
-    {
-      "name": "firebase_ui_auth",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/firebase_ui_auth-1.13.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.18"
-    },
-    {
-      "name": "firebase_ui_localizations",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/firebase_ui_localizations-1.14.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.18"
-    },
-    {
-      "name": "firebase_ui_oauth",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/firebase_ui_oauth-1.5.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.18"
-    },
-    {
-      "name": "firebase_ui_shared",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/firebase_ui_shared-1.4.1",
-      "packageUri": "lib/",
-      "languageVersion": "2.18"
-    },
-    {
       "name": "flutter",
       "rootUri": "file:///home/codespace/flutter/packages/flutter",
       "packageUri": "lib/",
       "languageVersion": "3.7"
-    },
-    {
-      "name": "flutter_localizations",
-      "rootUri": "file:///home/codespace/flutter/packages/flutter_localizations",
-      "packageUri": "lib/",
-      "languageVersion": "3.7"
-    },
-    {
-      "name": "flutter_svg",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/flutter_svg-2.2.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.6"
     },
     {
       "name": "flutter_test",
@@ -188,12 +116,6 @@
       "languageVersion": "3.7"
     },
     {
-      "name": "http",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/http-1.4.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.4"
-    },
-    {
       "name": "http_parser",
       "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/http_parser-4.1.2",
       "packageUri": "lib/",
@@ -204,12 +126,6 @@
       "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/idb_shim-2.6.7",
       "packageUri": "lib/",
       "languageVersion": "3.8"
-    },
-    {
-      "name": "intl",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/intl-0.20.2",
-      "packageUri": "lib/",
-      "languageVersion": "3.3"
     },
     {
       "name": "js",
@@ -266,12 +182,6 @@
       "languageVersion": "3.4"
     },
     {
-      "name": "path_parsing",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/path_parsing-1.1.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.3"
-    },
-    {
       "name": "path_provider_linux",
       "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/path_provider_linux-2.2.1",
       "packageUri": "lib/",
@@ -288,12 +198,6 @@
       "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/path_provider_windows-2.3.0",
       "packageUri": "lib/",
       "languageVersion": "3.2"
-    },
-    {
-      "name": "petitparser",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/petitparser-6.1.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.5"
     },
     {
       "name": "platform",
@@ -416,24 +320,6 @@
       "languageVersion": "3.5"
     },
     {
-      "name": "vector_graphics",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/vector_graphics-1.1.19",
-      "packageUri": "lib/",
-      "languageVersion": "3.6"
-    },
-    {
-      "name": "vector_graphics_codec",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/vector_graphics_codec-1.1.13",
-      "packageUri": "lib/",
-      "languageVersion": "3.4"
-    },
-    {
-      "name": "vector_graphics_compiler",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/vector_graphics_compiler-1.1.17",
-      "packageUri": "lib/",
-      "languageVersion": "3.6"
-    },
-    {
       "name": "vector_math",
       "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/vector_math-2.1.4",
       "packageUri": "lib/",
@@ -456,12 +342,6 @@
       "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/xdg_directories-1.1.0",
       "packageUri": "lib/",
       "languageVersion": "3.3"
-    },
-    {
-      "name": "xml",
-      "rootUri": "file:///home/codespace/.pub-cache/hosted/pub.dev/xml-6.5.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.2"
     },
     {
       "name": "courses_web",
