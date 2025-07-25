@@ -145,18 +145,14 @@ class _ExpenseFormState extends State<ExpenseForm> {
         print("📦 JSON OCR d'origine reçu : $jsonString");
 
         try {
-          
-          final String? montant = RegExp(r'"total"\s*:\s*"?([^",}]+)"?').firstMatch(jsonString)?.group(1)?.replaceAll(',', '.') ?? '';
-          final String? dateString = RegExp(r'"date"\s*:\s*"?([^",}]+)"?').firstMatch(jsonString)?.group(1) ?? '';
-          final String? category = RegExp(r'"category"\s*:\s*"?([^",}]+)"?').firstMatch(jsonString)?.group(1) ?? '';
-          /* final String fullText = data['text']; */
+          final data = jsonDecode(jsonString);
 
-        /*   print('🧾 Texte complet : $fullText');
-
-          print('Montant seul : $montant'); */
+          final String? montant = data['total']?.toString()?.replaceAll(',', '.');
+          final String? dateString = data['date'];
+          final String? category = data['category'];
 
           DateTime? parsedDate;
-          if (dateString != null) {
+          if (dateString != null && dateString.isNotEmpty) {
             try {
               parsedDate = DateTime.parse(dateString);
             } catch (e) {
@@ -166,22 +162,28 @@ class _ExpenseFormState extends State<ExpenseForm> {
 
           setState(() {
             if (montant != null) {
-              _amountController.text = (montant ?? '').toString().replaceAll(RegExp(r'[^\d.,]'), '');
-              /*  print("💰 Montant détecté pb : ${montant?.toString() ?? 'null'}");*/
+              _amountController.text =
+                  montant.replaceAll(RegExp(r'[^\d.,]'), '');
+              print("💰 Montant détecté : $montant");
             } else {
               print("❌ Aucun montant détecté");
             }
 
             if (parsedDate != null) {
               _selectedDate = parsedDate;
-              _dateController.text = '${parsedDate.day}/${parsedDate.month}/${parsedDate.year}';
+              _dateController.text =
+                  '${parsedDate.day}/${parsedDate.month}/${parsedDate.year}';
               print("📅 Date détectée : $_selectedDate");
             } else {
               print("❌ Aucune date détectée");
             }
 
-            _selectedCategory = category ?? 'Autre';
-            print("🏷️ Catégorie détectée : $_selectedCategory");
+            if (category != null && category.isNotEmpty) {
+              _selectedCategory = category;
+              print("🏷️ Catégorie détectée : $_selectedCategory");
+            } else {
+              print("🏷️ Catégorie non reconnue");
+            }
 
             _ocrSummary = "💡 Dépense détectée : "
                 "${montant != null ? '$montant €' : 'montant inconnu'}, "
