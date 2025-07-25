@@ -170,20 +170,14 @@ async function compressAndSendToVisionAPI(base64Image, callbackId) {
 
       const text = json.responses?.[0]?.fullTextAnnotation?.text ?? '';
       const result = analyzeTicketText(text);
-     /*  const event = new CustomEvent(`ocrResult-${callbackId}`, {
-        detail: {
-          text: result,
-          compressedImage: `data:image/webp;base64,${compressedBase64}`
-        },
-      }); */
-
+    
       const event = new CustomEvent(`ocrResult-${callbackId}`, {
         detail: {
           text: text,
           compressedImage: 'data:image/webp;base64,' + compressedBase64,
-          amount: parsed.amount,
-          category: parsed.category,
-          date: parsed.date,
+          amount: result.amount,
+          category: result.category,
+          date: result.date,
         }
       });
 
