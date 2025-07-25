@@ -53,12 +53,23 @@ class IndexedDbService {
     await txn.completed;
   }
 
-  Future<List<Map<String, dynamic>>> getAllExpenses() async {
-    final txn = _database!.transaction(_expenseStore, 'readonly');
-    final store = txn.objectStore(_expenseStore);
-    final cursors = await store.openCursor(autoAdvance: true).toList();
-    return cursors.map((cursor) => cursor.value as Map<String, dynamic>).toList();
-  }
+    Future<List<Map<String, dynamic>>> getAllExpenses() async {
+      final txn = _database!.transaction(_expenseStore, 'readonly');
+      final store = txn.objectStore(_expenseStore);
+      final cursors = await store.openCursor(autoAdvance: true).toList();
+      
+      print('Nombre de cursors: ${cursors.length}');
+      
+      for (int i = 0; i < cursors.length; i++) {
+        final cursor = cursors[i];
+        print('Cursor $i: value = ${cursor.value}, type = ${cursor.value.runtimeType}');
+      }
+      
+      return cursors
+          .where((cursor) => cursor.value != null && cursor.value is Map)
+          .map((cursor) => Map<String, dynamic>.from(cursor.value as Map))
+          .toList();
+    }
     Future<void> clearAll() async {
     final txn1 = _database!.transaction(_expenseStore, 'readwrite');
     await txn1.objectStore(_expenseStore).clear();

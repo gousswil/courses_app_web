@@ -13,7 +13,7 @@ class ExpenseHistoryPage extends StatefulWidget {
 class _ExpenseHistoryPageState extends State<ExpenseHistoryPage> {
   final IndexedDbService _service = IndexedDbService();
   List<Map<String, dynamic>> _expenses = [];
-  bool _isLoading = false;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -21,17 +21,34 @@ class _ExpenseHistoryPageState extends State<ExpenseHistoryPage> {
     _loadExpenses();
   }
 
-  Future<void> _loadExpenses() async {
-    await _service.init();
-    final loadedExpenses = await _service.getAllExpenses();
-    print("LoadedExpense: $loadedExpenses");
-    setState(() {
-      if (loadedExpenses != null) {
-        _expenses = loadedExpenses;
+    Future<void> _loadExpenses() async {
+      setState(() {
+        _isLoading = true;
+      });
+      
+      try {
+        await _service.init();
+        final loadedExpenses = await _service.getAllExpenses();
+        print("LoadedExpense: $loadedExpenses");
+        print("Type: ${loadedExpenses.runtimeType}");
+        
+        setState(() {
+          if (loadedExpenses != null && loadedExpenses is List) {
+            _expenses = loadedExpenses;
+          } else {
+            print("loadedExpenses n'est pas du bon type ou est null");
+            _expenses = []; // Valeur par défaut
+          }
+          _isLoading = false;
+        });
+      } catch (e) {
+        print("Erreur: $e");
+        setState(() {
+          _expenses = [];
+          _isLoading = false;
+        });
       }
-      _isLoading = true;
-    });
-  }
+    }
 
   @override
   Widget build(BuildContext context) {
