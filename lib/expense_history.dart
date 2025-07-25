@@ -13,7 +13,7 @@ class ExpenseHistoryPage extends StatefulWidget {
 class _ExpenseHistoryPageState extends State<ExpenseHistoryPage> {
   final IndexedDbService _service = IndexedDbService();
   List<Map<String, dynamic>> _expenses = [];
-  bool _isLoading = true;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -29,7 +29,7 @@ class _ExpenseHistoryPageState extends State<ExpenseHistoryPage> {
       if (loadedExpenses != null) {
         _expenses = loadedExpenses;
       }
-      _isLoading = false;
+      _isLoading = true;
     });
   }
 
