@@ -60,28 +60,26 @@ class IndexedDbService {
           
           final expenses = <Map<String, dynamic>>[];
           
-          await for (final cursor in store.openCursor(autoAdvance: false)) {
-            if (cursor.value != null) {
-              expenses.add(cursor.value as Map<String, dynamic>);
+          await for (final cursor in store.openCursor()) {
+            if (cursor.value != null && cursor.value is Map) {
+              try {
+                final expense = Map<String, dynamic>.from(cursor.value as Map);
+                expenses.add(expense);
+                print('Expense ajoutée: $expense');
+              } catch (e) {
+                print('Erreur conversion curseur: $e, valeur: ${cursor.value}');
+              }
             }
-            cursor.next();
           }
           
+          print('Total expenses récupérées: ${expenses.length}');
           return expenses;
+          
         } catch (e) {
           print('Erreur dans getAllExpenses: $e');
           return [];
         }
       }
-    Future<void> clearAll() async {
-    final txn1 = _database!.transaction(_expenseStore, 'readwrite');
-    await txn1.objectStore(_expenseStore).clear();
-    await txn1.completed;
-
-    final txn2 = _database!.transaction(_imageStore, 'readwrite');
-    await txn2.objectStore(_imageStore).clear();
-    await txn2.completed;
-  }
 
     Future<void> addExpense(Map<String, dynamic> expense) async {
       if (_database == null) {
