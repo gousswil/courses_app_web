@@ -18,6 +18,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
   final _dateController = TextEditingController();
   final _categoryController = TextEditingController();
   final IndexedDbService _indexedDbService = IndexedDbService();
+ 
 
   bool _isAnalyzing = false;
   
@@ -27,6 +28,8 @@ class _ExpenseFormState extends State<ExpenseForm> {
   String? _ocrSummary;
   String? _ticketImageBase64;
   String? _ticketImageId;
+  String? _compressedBase64FromOCR;
+  String? _imageIdFromOCR;
 
 
     bool _showMobileOptions = false;
@@ -84,10 +87,20 @@ class _ExpenseFormState extends State<ExpenseForm> {
               final callbackId = 'ocr_callback_${DateTime.now().millisecondsSinceEpoch}';
               final eventKey = "ocrResult-$callbackId";
 
-              html.EventListener? listener;
+            html.EventListener? listener;
               listener = allowInterop((e) async {
                 final customEvent = e as html.CustomEvent;
-                final detail = customEvent.detail as Map;
+                final detailRaw = customEvent.detail;
+                late final Map detail;
+
+                if (detailRaw is String) {
+                  detail = jsonDecode(detailRaw) as Map;
+                } else if (detailRaw is Map) {
+                  detail = detailRaw;
+                } else {
+                  print("❌ Format inattendu de detail: ${detailRaw.runtimeType}");
+                  return;
+                }
 
                 final compressedBase64 = (detail['compressedImage'] as String?) ?? '';
                 final imageId = 'ticket_${DateTime.now().millisecondsSinceEpoch}';
@@ -97,25 +110,20 @@ class _ExpenseFormState extends State<ExpenseForm> {
                 await service.init();
                 await service.saveImage(imageId, imageBytes);
 
-                // Créer la dépense avec les champs détectés
-                final expense = {
-                  'amount': detail['amount'] ?? '',
-                  'category': detail['category'] ?? '',
-                  'date': detail['date'] ?? DateTime.now().toIso8601String(),
-                  'thumbnail': compressedBase64,
-                  'imageId': imageId,
-                };
-
-                await service.addExpense(expense); // ✅ uniquement dans IndexedDB
-
+                // Enregistre l'image et l'ID temporairement
                 setState(() {
+                  _compressedBase64FromOCR = compressedBase64;
+                  _imageIdFromOCR = imageId;
                   _isAnalyzing = false;
                 });
+
+                updateFormFieldsFromOCR(jsonEncode(detail));
 
                 if (listener != null) {
                   html.window.removeEventListener(eventKey, listener);
                 }
               });
+
 
 
               html.window.addEventListener(eventKey, listener);
@@ -219,38 +227,37 @@ class _ExpenseFormState extends State<ExpenseForm> {
     }
 
 
+    void _saveExpense() async {
+        final amount = _amountController.text;
+        if (amount.isEmpty) return;
 
-  void _saveExpense() {
-    final amount = _amountController.text;
-    if (amount.isEmpty) return;
+        final expense = {
+          'amount': amount,
+          'category': _selectedCategory,
+          'date': _selectedDate.toIso8601String(),
+          'thumbnail': _compressedBase64FromOCR ?? '',
+          'imageId': _imageIdFromOCR ?? '',
+        };
 
-    final expense = {
-      'amount': amount,
-      'category': _selectedCategory,
-      'date': _selectedDate.toIso8601String()
-      /* 'thumbnail': compressedBase64,  */// ✅ miniature WebP
-      /* 'imageId': imageId, */ // On y revient
-    };
+        final service = IndexedDbService();
+        await service.init();
+        await service.addExpense(expense);
 
-    final List<String> expenses =
-        (html.window.localStorage['expenses'] != null)
-            ? List<String>.from(json.decode(html.window.localStorage['expenses']!))
-            : [];
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('💾 Dépense enregistrée')),
+        );
 
-    expenses.add(json.encode(expense));
-    html.window.localStorage['expenses'] = json.encode(expenses);
+        _amountController.clear();
+        _dateController.clear();
+        setState(() {
+          _selectedCategory = 'Alimentaire';
+          _selectedDate = DateTime.now();
+          _ocrSummary = null;
+          _compressedBase64FromOCR = null;
+          _imageIdFromOCR = null;
+        });
+      }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('💾 Dépense ajoutée')),
-    );
-
-    _amountController.clear();
-    _dateController.clear();
-    setState(() {
-      _selectedCategory = 'Alimentaire';
-      _selectedDate = DateTime.now();
-    });
-  }
 
   Future<void> _pickDate() async {
     final date = await showDatePicker(
