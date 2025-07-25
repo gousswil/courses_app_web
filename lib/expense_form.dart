@@ -92,7 +92,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                 final customEvent = e as html.CustomEvent;
                 final detailRaw = customEvent.detail;
                 late final Map detail;
-
+                
                 if (detailRaw is String) {
                   detail = jsonDecode(detailRaw) as Map;
                 } else if (detailRaw is Map) {
@@ -101,7 +101,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                   print("❌ Format inattendu de detail: ${detailRaw.runtimeType}");
                   return;
                 }
-
+                print("JSON detail : $detail");
                 final compressedBase64 = (detail['compressedImage'] as String?) ?? '';
                 final imageId = 'ticket_${DateTime.now().millisecondsSinceEpoch}';
 
