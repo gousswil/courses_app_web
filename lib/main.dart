@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'expense_form.dart'; // Assure-toi que ce fichier existe
 import 'expense_history.dart'; 
+import 'pages/expenses_list.dart'; 
 import 'ocr_scan.dart'; 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
@@ -100,7 +101,7 @@ class _HomePageState extends State<HomePage> {
 
   static final List<Widget> _pages = <Widget>[
     AccueilPage(),
-    ExpenseHistoryPage(), // À créer si ce n’est pas encore fait
+    ExpensesList(), // À créer si ce n’est pas encore fait
     ExpenseForm(),     // Le formulaire d'ajout
     OcrScanPage(),
   ];

@@ -18,6 +18,7 @@ dependencies:
   
   # State management
   provider: ^6.1.1
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:

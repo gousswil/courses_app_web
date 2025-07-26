@@ -10,6 +10,7 @@
         "cupertino_icons",
         "flutter",
         "idb_shim",
+        "intl",
         "js",
         "provider",
         "shared_preferences",
@@ -53,6 +54,15 @@
         "test_api",
         "vector_math",
         "vm_service"
+      ]
+    },
+    {
+      "name": "intl",
+      "version": "0.20.2",
+      "dependencies": [
+        "clock",
+        "meta",
+        "path"
       ]
     },
     {
