@@ -85,9 +85,13 @@ function extractTotal(text) {
           }
           else{
               //On va capturer toutes suivant ces criètres jusqu'à rencontrer des lignes contenant de nouveau des mots 
-              let totalLineIndex = lines.findIndex(line =>
+              /* let totalLineIndex = lines.findIndex(line =>
                 /montant\s+total|ttc|^(?:total|montant)\s*$|total\s+(\d+\s+)*\d+\s*(?:€|euros?)?|(?:total|eur|montant)\s+\d+\s*(?:€|euros?)?/i.test(line)
-              );
+              ); */
+              let totalLineIndex = lines.findIndex((line, index) =>
+              /montant\s+total|ttc|^(?:total|montant)\s*$|total\s+(\d+\s+)*\d+\s*(?:€|euros?|eur)?|(?:total|eur|montant)\s+\d+\s*(?:€|euros?|eur)?/i.test(line) ||
+              (/^\s*total\s*$/i.test(line) && [1,2,3].some(i => index + i < lines.length && /^\s*\d+[,.]?\d*\s*(?:€|euros?|eur)\s*$/i.test(lines[index + i])))
+            );
 
               let capturedLines = [];
               if (totalLineIndex !== -1) {

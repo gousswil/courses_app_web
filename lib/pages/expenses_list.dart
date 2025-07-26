@@ -107,18 +107,21 @@ void _showImageDialog(BuildContext context, String imageBase64) {
                             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             child: ListTile(
                                 leading: imageBase64.isNotEmpty
-                                    ? GestureDetector(
-                                        onTap: () => _showImageDialog(context, imageBase64),
-                                        child: Hero(
-                                        tag: 'expense_image_$imageBase64', // Tag unique pour l'animation
+                                   ? MouseRegion(
+                                    cursor: SystemMouseCursors.click,
+                                    child: GestureDetector(
+                                    onTap: () => _showImageDialog(context, imageBase64),
+                                    child: Hero(
+                                        tag: 'expense_image_$imageBase64',
                                         child: Image.memory(
-                                            UriData.parse(imageBase64).contentAsBytes(),
-                                            width: 48,
-                                            height: 48,
-                                            fit: BoxFit.cover,
+                                        UriData.parse(imageBase64).contentAsBytes(),
+                                        width: 48,
+                                        height: 48,
+                                        fit: BoxFit.cover,
                                         ),
-                                        ),
-                                    )
+                                    ),
+                                    ),
+                                )
                                     : const Icon(Icons.receipt_long),
                                 title: Text('$amount € - $category'),
                                 subtitle: Text(_formatDate(date)),
