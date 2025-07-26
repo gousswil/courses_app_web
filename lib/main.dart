@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'services/supabase_auth_service.dart';
 import 'pages/supabase_login_page.dart';
+import 'pages/login_page.dart';
 
 /* void main() => runApp(CoursesApp()); */
 
@@ -85,7 +86,7 @@ class _AuthGateState extends State<AuthGate> {
     }
 
     // Si session existe -> page d'accueil, sinon -> login
-    return _session != null ? HomePage() : SupabaseLoginPage();
+    return _session != null ? HomePage() : LoginPage();
   }
 }
 
@@ -131,6 +132,19 @@ class _HomePageState extends State<HomePage> {
 }
 
 class AccueilPage extends StatelessWidget {
+  // Fonction de déconnexion
+  Future<void> _signOut(BuildContext context) async {
+    try {
+      await Supabase.instance.client.auth.signOut();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Déconnexion réussie')),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la déconnexion: $error')),
+      );
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Center(child: Text('Bienvenue dans Courses'));
