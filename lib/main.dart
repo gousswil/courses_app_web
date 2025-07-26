@@ -22,6 +22,7 @@ import 'pages/supabase_login_page.dart';
 
 class CoursesApp extends StatelessWidget {
   const CoursesApp({Key? key}) : super(key: key);
+   
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -33,8 +34,58 @@ class CoursesApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: Colors.white,
       ),
-      home: HomePage(),
+      home: AuthGate(), /* HomePage(), */
     );
+  }
+}
+
+// AuthGate - Gère le routage selon l'état d'authentification
+class AuthGate extends StatefulWidget {
+  @override
+  _AuthGateState createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  bool _isLoading = true;
+  Session? _session;
+
+  @override
+  void initState() {
+    super.initState();
+    _getInitialSession();
+    _listenToAuthChanges();
+  }
+
+   // Récupère la session initiale
+  Future<void> _getInitialSession() async {
+    final session = Supabase.instance.client.auth.currentSession;
+    setState(() {
+      _session = session;
+      _isLoading = false;
+    });
+  }
+
+   void _listenToAuthChanges() {
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      setState(() {
+        _session = data.session;
+      });
+    });
+  }
+
+   @override
+  Widget build(BuildContext context) {
+    // Écran de chargement pendant la vérification de session
+    if (_isLoading) {
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // Si session existe -> page d'accueil, sinon -> login
+    return _session != null ? HomePage() : SupabaseLoginPage();
   }
 }
 
