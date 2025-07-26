@@ -88,27 +88,41 @@ function extractTotal(text) {
               /* let totalLineIndex = lines.findIndex(line =>
                 /montant\s+total|ttc|^(?:total|montant)\s*$|total\s+(\d+\s+)*\d+\s*(?:€|euros?)?|(?:total|eur|montant)\s+\d+\s*(?:€|euros?)?/i.test(line)
               ); */
-              let totalLineIndex = lines.findIndex((line, index) =>
-              /montant\s+total|ttc|^(?:total|montant)\s*$|total\s+(\d+\s+)*\d+\s*(?:€|euros?|eur)?|(?:total|eur|montant)\s+\d+\s*(?:€|euros?|eur)?/i.test(line) ||
-              (/^\s*total\s*$/i.test(line) && [1,2,3].some(i => index + i < lines.length && /^\s*\d+[,.]?\d*\s*(?:€|euros?|eur)\s*$/i.test(lines[index + i])))
-            );
+             let totalLineIndex = lines.findIndex((line, index) =>
+                /montant\s+total|ttc|^(?:total|montant)\s*$|total\s+(\d+\s+)*\d+\s*(?:€|euros?|eur)?|(?:total|eur|montant)\s+\d+\s*(?:€|euros?|eur)?/i.test(line) ||
+                (/^\s*total\s*$/i.test(line) && [1,2,3].some(i => index + i < lines.length && /^\s*\d+[,.]?\d*\s*(?:€|euros?|eur)\s*$/i.test(lines[index + i])))
+              );
 
               let capturedLines = [];
               if (totalLineIndex !== -1) {
-                // Ajouter la ligne "total" elle-même
                 capturedLines.push(lines[totalLineIndex]);
                 
-                // Parcourir les lignes suivantes
+                let textLinesCount = 0; // Compteur de lignes contenant du texte
+                
                 for (let i = totalLineIndex + 1; i < lines.length; i++) {
-                  // Si la ligne contient des lettres, on s'arrête
-                  if (/[a-zA-ZÀ-ÿ]/.test(lines[i])) {
-                    break;
+                  const currentLine = lines[i];
+                  
+                  // Si c'est un montant, on l'ajoute et on continue
+                  if (/^\s*\d+[,.]?\d*\s*(?:€|euros?|eur)?\s*$/i.test(currentLine)) {
+                    capturedLines.push(currentLine);
+                    continue;
                   }
-                  // Sinon on ajoute la ligne
-                  capturedLines.push(lines[i]);
-                      }
+                  
+                  // Si ça contient des lettres
+                  if (/[a-zA-ZÀ-ÿ]/.test(currentLine)) {
+                    textLinesCount++;
+                    // On accepte maximum 2 lignes de texte après TOTAL
+                    if (textLinesCount > 3) {
+                      break;
+                    }
+                    // Sinon on ignore cette ligne et on continue
+                    continue;
+                  }
+                  
+                  // Si c'est ni un montant ni du texte (ligne vide, symboles...), on l'ajoute
+                  capturedLines.push(currentLine);
                 }
-
+              }
                 
                 console.log("capturedLines : "+ capturedLines);
                 let highestNumber = Math.max(...capturedLines.flatMap(line => line.match(/\d+[.,]?\d*/g) || []).map(n => parseFloat(n.replace(',', '.'))));
