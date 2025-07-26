@@ -18,11 +18,14 @@ class SupabaseService {
       'image_base64': base64Image,
     };
 
+    try{
     final response = await _client.from('expenses').insert(expense);
+    
+    }catch (error) {
+        throw Exception('Erreur Supabase : $error');
+      }
 
-    if (response.error != null) {
-      throw Exception('Erreur Supabase : ${response.error!.message}');
-    }
+    
   }
 
   /// Récupère les dépenses de l'utilisateur connecté
