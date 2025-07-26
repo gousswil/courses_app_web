@@ -163,7 +163,7 @@ async function compressAndSendToVisionAPI(base64Image, callbackId) {
     const body = {
       requests: [
         {
-          image: { content: compressedBase64 },
+          image: { content: base64Image },
           features: [{ type: "TEXT_DETECTION" }]
         }
       ]
