@@ -12,9 +12,14 @@
       const dateRegex = /\b(\d{2}[\/\-]\d{2}[\/\-](\d{2}|\d{4}))\b/g;
       const allDates = [...text.matchAll(dateRegex)].map(m => m[1]);
       let parsedDate = null;
+
       if (allDates.length > 0) {
-        const last = allDates[allDates.length - 1];
-        const [d, m, y] = last.split(/[\/\-]/);
+        // Vérifier si "CARTE BANCAIRE" apparaît au début (avec espaces/retours à la ligne)
+        const useFirstDate = /^\s*CARTE\s+BANCAIRE/i.test(text);
+        
+        const selectedDate = useFirstDate ? allDates[0] : allDates[allDates.length - 1];
+        
+        const [d, m, y] = selectedDate.split(/[\/\-]/);
         const year = y.length === 2 ? '20' + y : y;
         parsedDate = `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
       }
