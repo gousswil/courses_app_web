@@ -11,13 +11,18 @@ import 'pages/login_page.dart';
 
     void main() async {
       WidgetsFlutterBinding.ensureInitialized();
-       try {
-          // Firebase est déjà initialisé dans index.html
-          await Firebase.initializeApp();
-          print("Firebase connecté avec succès");
-        } catch (e) {
-          print("Erreur Firebase: $e");
-        }
+       
+        await Firebase.initializeApp(
+    options: const FirebaseOptions(
+      apiKey: "AIzaSyAVu1AgUfipE7lamOCAdknJIrK90gu2heE",
+          authDomain: "courses-25d53.firebaseapp.com",
+          projectId: "courses-25d53",
+          storageBucket: "courses-25d53.firebasestorage.app",
+          messagingSenderId: "966828030779",
+          appId: "1:966828030779:web:bea2ecc6d9c9f3d8a5551e",
+          measurementId: "G-DC7199X8V6"
+    ),
+  );
       runApp(const CoursesApp());
   }
 
