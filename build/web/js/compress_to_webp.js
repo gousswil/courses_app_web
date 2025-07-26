@@ -88,43 +88,80 @@ function extractTotal(text) {
               /* let totalLineIndex = lines.findIndex(line =>
                 /montant\s+total|ttc|^(?:total|montant)\s*$|total\s+(\d+\s+)*\d+\s*(?:€|euros?)?|(?:total|eur|montant)\s+\d+\s*(?:€|euros?)?/i.test(line)
               ); */
-             let totalLineIndex = lines.findIndex((line, index) =>
-                /montant\s+total|ttc|^(?:total|montant)\s*$|total\s+(\d+\s+)*\d+\s*(?:€|euros?|eur)?|(?:total|eur|montant)\s+\d+\s*(?:€|euros?|eur)?/i.test(line) ||
-                (/^\s*total\s*$/i.test(line) && [1,2,3].some(i => index + i < lines.length && /^\s*\d+[,.]?\d*\s*(?:€|euros?|eur)\s*$/i.test(lines[index + i])))
-              );
+            let totalLineIndex = lines.findIndex((line, index) =>                 
+                  /montant\s+total|ttc|^(?:total|montant)\s*$|total\s+(\d+\s+)*\d+\s*(?:€|euros?|eur)?|(?:total|eur|montant)\s+\d+\s*(?:€|euros?|eur)?/i.test(line) ||                 
+                  (/^\s*total\s*$/i.test(line) && [1,2,3].some(i => index + i < lines.length && /^\s*\d+[,.]?\d*\s*(?:€|euros?|eur)\s*$/i.test(lines[index + i])))               
+              );                
 
-              let capturedLines = [];
+              let capturedLines = [];               
+
               if (totalLineIndex !== -1) {
-                capturedLines.push(lines[totalLineIndex]);
-                
-                let textLinesCount = 0; // Compteur de lignes contenant du texte
-                
-                for (let i = totalLineIndex + 1; i < lines.length; i++) {
-                  const currentLine = lines[i];
+                  // Code existant quand TOTAL est trouvé
+                  capturedLines.push(lines[totalLineIndex]);                                  
+                  let textLinesCount = 0;                                  
+                  for (let i = totalLineIndex + 1; i < lines.length; i++) {                   
+                      const currentLine = lines[i];                                      
+                      if (/^\s*\d+[,.]?\d*\s*(?:€|euros?|eur)?\s*$/i.test(currentLine)) {                     
+                          capturedLines.push(currentLine);                     
+                          continue;                   
+                      }                                      
+                      if (/[a-zA-ZÀ-ÿ]/.test(currentLine)) {                     
+                          textLinesCount++;                     
+                          if (textLinesCount > 3) {                       
+                              break;                     
+                          }                     
+                          continue;                   
+                      }                                      
+                      capturedLines.push(currentLine);                 
+                  }               
+              } else {
+                  // NOUVEAU : Quand TOTAL n'est pas trouvé, récupérer le montant le plus élevé
+                  console.log("Aucun TOTAL trouvé, recherche du montant le plus élevé...");
                   
-                  // Si c'est un montant, on l'ajoute et on continue
-                  if (/^\s*\d+[,.]?\d*\s*(?:€|euros?|eur)?\s*$/i.test(currentLine)) {
-                    capturedLines.push(currentLine);
-                    continue;
+                  // Extraire tous les montants du texte
+                  const allAmounts = [];
+                  
+                  lines.forEach((line, index) => {
+                      // Regex pour capturer les montants avec €, EUR, euros
+                      const amountMatches = line.match(/\d+[,.]?\d*\s*(?:€|euros?|eur)/gi);
+                      if (amountMatches) {
+                          amountMatches.forEach(match => {
+                              const numericValue = parseFloat(match.replace(/[€euros?eur]/gi, '').replace(',', '.').trim());
+                              if (numericValue > 0) {
+                                  allAmounts.push({
+                                      value: numericValue,
+                                      original: match.trim(),
+                                      line: line.trim(),
+                                      lineIndex: index
+                                  });
+                              }
+                          });
+                      }
+                  });
+                  
+                  if (allAmounts.length > 0) {
+                      // Trier par valeur décroissante et prendre le plus élevé
+                      allAmounts.sort((a, b) => b.value - a.value);
+                      const highestAmount = allAmounts[0];
+                      
+                      console.log(`Montant le plus élevé trouvé: ${highestAmount.original} (${highestAmount.value}€)`);
+                      
+                      // Capturer la ligne contenant le montant le plus élevé
+                      capturedLines.push(highestAmount.line);
+                      
+                      // Optionnel : capturer aussi les lignes adjacentes
+                      const targetIndex = highestAmount.lineIndex;
+                      for (let i = Math.max(0, targetIndex - 1); i <= Math.min(lines.length - 1, targetIndex + 2); i++) {
+                          if (i !== targetIndex && lines[i].trim() !== '') {
+                              capturedLines.push(lines[i].trim());
+                          }
+                      }
+                  } else {
+                      console.log("Aucun montant trouvé dans le texte");
                   }
-                  
-                  // Si ça contient des lettres
-                  if (/[a-zA-ZÀ-ÿ]/.test(currentLine)) {
-                    textLinesCount++;
-                    // On accepte maximum 2 lignes de texte après TOTAL
-                    if (textLinesCount > 3) {
-                      break;
-                    }
-                    // Sinon on ignore cette ligne et on continue
-                    continue;
-                  }
-                  
-                  // Si c'est ni un montant ni du texte (ligne vide, symboles...), on l'ajoute
-                  capturedLines.push(currentLine);
-                }
               }
                 
-                console.log("capturedLines : "+ capturedLines);
+              console.log("capturedLines : "+ capturedLines);
                 let highestNumber = Math.max(...capturedLines.flatMap(line => line.match(/\d+[.,]?\d*/g) || []).map(n => parseFloat(n.replace(',', '.'))));
                 console.log("highestNumber found : "+ highestNumber); 
                 montant =highestNumber;
