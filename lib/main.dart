@@ -2,27 +2,21 @@ import 'package:flutter/material.dart';
 import 'expense_form.dart'; // Assure-toi que ce fichier existe
 import 'expense_history.dart'; 
 import 'ocr_scan.dart'; 
-import 'package:firebase_core/firebase_core.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
-import 'services/auth_service.dart';
-import 'pages/login_page.dart';
+import 'services/supabase_auth_service.dart';
+import 'pages/supabase_login_page.dart';
 
 /* void main() => runApp(CoursesApp()); */
 
     void main() async {
       WidgetsFlutterBinding.ensureInitialized();
        
-        await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: "AIzaSyAVu1AgUfipE7lamOCAdknJIrK90gu2heE",
-          authDomain: "courses-25d53.firebaseapp.com",
-          projectId: "courses-25d53",
-          storageBucket: "courses-25d53.firebasestorage.app",
-          messagingSenderId: "966828030779",
-          appId: "1:966828030779:web:bea2ecc6d9c9f3d8a5551e",
-          measurementId: "G-DC7199X8V6"
-    ),
-  );
+        // Initialiser Supabase
+      await Supabase.initialize(
+        url: 'https://nixuyburyjreegfnozio.supabase.co', // À remplacer
+        anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5peHV5YnVyeWpyZWVnZm5vemlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM0ODgzNjgsImV4cCI6MjA2OTA2NDM2OH0.TLFs0V_8dYFJSNfR1q0hfDa530aALOz1i9ebOcv-des', // À remplacer
+      );
       runApp(const CoursesApp());
   }
 
