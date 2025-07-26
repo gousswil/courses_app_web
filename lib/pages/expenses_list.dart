@@ -40,6 +40,53 @@ class _ExpensesListState extends State<ExpensesList> {
     return DateFormat('dd/MM/yyyy').format(date);
   }
 
+
+  // Méthode pour afficher l'image en grand
+void _showImageDialog(BuildContext context, String imageBase64) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        child: Stack(
+          children: [
+            // Image en grand avec Hero animation
+            Center(
+              child: Hero(
+                tag: 'expense_image_$imageBase64',
+                child: InteractiveViewer(
+                  child: Image.memory(
+                    UriData.parse(imageBase64).contentAsBytes(),
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+            // Bouton fermer
+            Positioned(
+              top: 40,
+              right: 20,
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.black54,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.close,
+                    color: Colors.white,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -56,22 +103,27 @@ class _ExpensesListState extends State<ExpensesList> {
                     final category = expense['category'] ?? '?';
                     final date = expense['date'] ?? '';
                     final imageBase64 = expense['image_base64'] ?? '';
-
-                    return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: ListTile(
-                        leading: imageBase64.isNotEmpty
-                            ? Image.memory(
-                                UriData.parse(imageBase64).contentAsBytes(),
-                                width: 48,
-                                height: 48,
-                                fit: BoxFit.cover,
-                              )
-                            : const Icon(Icons.receipt_long),
-                        title: Text('$amount € - $category'),
-                        subtitle: Text(_formatDate(date)),
-                      ),
-                    );
+                        return Card(
+                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: ListTile(
+                                leading: imageBase64.isNotEmpty
+                                    ? GestureDetector(
+                                        onTap: () => _showImageDialog(context, imageBase64),
+                                        child: Hero(
+                                        tag: 'expense_image_$imageBase64', // Tag unique pour l'animation
+                                        child: Image.memory(
+                                            UriData.parse(imageBase64).contentAsBytes(),
+                                            width: 48,
+                                            height: 48,
+                                            fit: BoxFit.cover,
+                                        ),
+                                        ),
+                                    )
+                                    : const Icon(Icons.receipt_long),
+                                title: Text('$amount € - $category'),
+                                subtitle: Text(_formatDate(date)),
+                            ),
+                            );
                   },
                 ),
     );
