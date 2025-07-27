@@ -25,7 +25,7 @@
       }
 
       // 🏷️ Catégorie : par mots-clés
-      const keywordToCategory = {
+     /*  const keywordToCategory = {
         'super u': 'Alimentaire',
         'carrefour': 'Alimentaire',
         'intermarché': 'Alimentaire',
@@ -50,15 +50,15 @@
         'mcdo': 'Alimentaire',
         'burger king': 'Alimentaire',
         'kfc': 'Alimentaire',
-      };
+      }; */
 
       let matchedCategory = 'Autre';
-      for (const key in keywordToCategory) {
+      /* for (const key in keywordToCategory) {
         if (fullTextLower.includes(key)) {
           matchedCategory = keywordToCategory[key];
           break;
         }
-      }
+      } */
       matchedCategory=getCategoryFromTicketText(fullTextLower);
 
       return {
