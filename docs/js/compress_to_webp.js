@@ -60,13 +60,14 @@
         }
       } */
      // Variables pour stocker les résultats
+      // Variables pour stocker les résultats
         let storeName = null;
         let category = 'Autre';
         let confidence = 0;
 
         const textUpper = text.toUpperCase();
 
-        // 1. D'abord essayer de détecter l'enseigne (logique simplifiée)
+        // 1. D'abord essayer de détecter l'enseigne
         const knownStores = {
           'SUPER U': 'Alimentation',
           'U EXPRESS': 'Alimentation', 
@@ -79,7 +80,6 @@
           'PHARMACIE': 'Santé'
         };
 
-        // Chercher une enseigne connue dans le texte
         for (const [store, storeCategory] of Object.entries(knownStores)) {
           if (textUpper.includes(store)) {
             storeName = store;
@@ -89,7 +89,7 @@
           }
         }
 
-        // 2. Si aucune enseigne trouvée, analyser le contenu du ticket
+        // 2. Si aucune enseigne trouvée, analyser le contenu avec système de score
         if (category === 'Autre') {
           const productKeywords = {
             'Alimentation': ['CHIPS', 'PAIN', 'LAIT', 'FROMAGE', 'VIANDE', 'LEGUME', 'FRUIT', 'YAOURT', 'BIERE', 'VIN', 'EAU', 'JUS', 'PATES', 'RIZ', 'CONSERVE', 'SURGELE'],
@@ -99,27 +99,37 @@
             'Beauté': ['PARFUM', 'SHAMPOING', 'CREME', 'MAQUILLAGE', 'DENTIFRICE', 'COSMETIQUE', 'BROSSE'],
             'Maison': ['LESSIVE', 'PRODUIT MENAGER', 'EPONGE', 'AMPOULE', 'PILE', 'VAISSELLE', 'DECO'],
             'Bricolage': ['VIS', 'CLOU', 'PEINTURE', 'OUTIL', 'PERCEUSE', 'MARTEAU', 'BOIS', 'PLANCHE'],
-            'Sport': ['BALLON', 'CHAUSSURE SPORT', 'SURVETEMENT', 'RAQUETTE', 'EQUIPEMENT SPORT'],
-            'Culture': ['LIVRE', 'CD', 'DVD', 'JOURNAL', 'MAGAZINE', 'PAPETERIE', 'STYLO'],
-            'Transport': ['TICKET', 'ABONNEMENT', 'METRO', 'BUS', 'TRAIN', 'PARKING', 'PEAGE', 'TAXI'],
-            'Electronique': ['TELEPHONE', 'ORDINATEUR', 'CABLE', 'CHARGEUR', 'BATTERIE', 'ECOUTEUR', 'TV'],
-            'Enfants': ['COUCHE', 'BIBERON', 'JOUET', 'PELUCHE', 'JEUX', 'LAIT INFANTILE'],
-            'Animaux': ['CROQUETTE', 'LITIERE', 'LAISSE', 'JOUET CHIEN', 'NOURRITURE CHAT'],
-            'Tabac': ['CIGARETTE', 'TABAC', 'BRIQUET', 'PAQUET'],
-            'Services': ['PRESSING', 'COIFFEUR', 'REPARATION', 'NETTOYAGE', 'LIVRAISON']
+            'Transport': ['TICKET', 'ABONNEMENT', 'METRO', 'BUS', 'TRAIN', 'PARKING', 'PEAGE', 'TAXI']
           };
           
-          // Parcourir chaque catégorie et ses mots-clés
+          // Compter les matches par catégorie
+          const categoryScores = {};
+          
           for (const [categoryName, keywords] of Object.entries(productKeywords)) {
-            const foundKeyword = keywords.some(keyword => textUpper.includes(keyword));
-            
-            if (foundKeyword) {
-              matchedCategory = categoryName;
-              confidence = 0.6;
-              break;
+            let score = 0;
+            for (const keyword of keywords) {
+              if (textUpper.includes(keyword)) {
+                score++;
+              }
+            }
+            if (score > 0) {
+              categoryScores[categoryName] = score;
             }
           }
+          
+          // Prendre la catégorie avec le plus de matches
+          if (Object.keys(categoryScores).length > 0) {
+            const bestCategory = Object.entries(categoryScores).reduce((max, [cat, score]) => 
+              score > max.score ? { category: cat, score } : max, 
+              { category: '', score: 0 }
+            );
+            
+            matchedCategory = bestCategory.category;
+            confidence = 0.6;
+          }
         }
+
+
 
       return {
         text,
