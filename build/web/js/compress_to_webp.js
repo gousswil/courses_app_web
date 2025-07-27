@@ -59,7 +59,67 @@
           break;
         }
       } */
-      matchedCategory=getCategoryFromTicketText(fullTextLower);
+     // Variables pour stocker les résultats
+        let storeName = null;
+        let category = 'Autre';
+        let confidence = 0;
+
+        const textUpper = text.toUpperCase();
+
+        // 1. D'abord essayer de détecter l'enseigne (logique simplifiée)
+        const knownStores = {
+          'SUPER U': 'Alimentation',
+          'U EXPRESS': 'Alimentation', 
+          'CARREFOUR': 'Alimentation',
+          'LECLERC': 'Alimentation',
+          'MCDONALD': 'Restauration',
+          'KFC': 'Restauration',
+          'TOTAL': 'Carburant',
+          'SHELL': 'Carburant',
+          'PHARMACIE': 'Santé'
+        };
+
+        // Chercher une enseigne connue dans le texte
+        for (const [store, storeCategory] of Object.entries(knownStores)) {
+          if (textUpper.includes(store)) {
+            storeName = store;
+            matchedCategory = storeCategory;
+            confidence = 0.9;
+            break;
+          }
+        }
+
+        // 2. Si aucune enseigne trouvée, analyser le contenu du ticket
+        if (category === 'Autre') {
+          const productKeywords = {
+            'Alimentation': ['CHIPS', 'PAIN', 'LAIT', 'FROMAGE', 'VIANDE', 'LEGUME', 'FRUIT', 'YAOURT', 'BIERE', 'VIN', 'EAU', 'JUS', 'PATES', 'RIZ', 'CONSERVE', 'SURGELE'],
+            'Carburant': ['ESSENCE', 'DIESEL', 'GAZOLE', 'CARBURANT', 'SUPER', 'SP95', 'SP98', 'GASOIL'],
+            'Santé': ['MEDICAMENT', 'SIROP', 'COMPRIMES', 'PANSEMENT', 'VITAMINE', 'HOMEOPATHIE', 'ORDONNANCE'],
+            'Mode': ['JEAN', 'CHEMISE', 'ROBE', 'CHAUSSURE', 'SAC', 'VETEMENT', 'PANTALON', 'PULL', 'MANTEAU'],
+            'Beauté': ['PARFUM', 'SHAMPOING', 'CREME', 'MAQUILLAGE', 'DENTIFRICE', 'COSMETIQUE', 'BROSSE'],
+            'Maison': ['LESSIVE', 'PRODUIT MENAGER', 'EPONGE', 'AMPOULE', 'PILE', 'VAISSELLE', 'DECO'],
+            'Bricolage': ['VIS', 'CLOU', 'PEINTURE', 'OUTIL', 'PERCEUSE', 'MARTEAU', 'BOIS', 'PLANCHE'],
+            'Sport': ['BALLON', 'CHAUSSURE SPORT', 'SURVETEMENT', 'RAQUETTE', 'EQUIPEMENT SPORT'],
+            'Culture': ['LIVRE', 'CD', 'DVD', 'JOURNAL', 'MAGAZINE', 'PAPETERIE', 'STYLO'],
+            'Transport': ['TICKET', 'ABONNEMENT', 'METRO', 'BUS', 'TRAIN', 'PARKING', 'PEAGE', 'TAXI'],
+            'Electronique': ['TELEPHONE', 'ORDINATEUR', 'CABLE', 'CHARGEUR', 'BATTERIE', 'ECOUTEUR', 'TV'],
+            'Enfants': ['COUCHE', 'BIBERON', 'JOUET', 'PELUCHE', 'JEUX', 'LAIT INFANTILE'],
+            'Animaux': ['CROQUETTE', 'LITIERE', 'LAISSE', 'JOUET CHIEN', 'NOURRITURE CHAT'],
+            'Tabac': ['CIGARETTE', 'TABAC', 'BRIQUET', 'PAQUET'],
+            'Services': ['PRESSING', 'COIFFEUR', 'REPARATION', 'NETTOYAGE', 'LIVRAISON']
+          };
+          
+          // Parcourir chaque catégorie et ses mots-clés
+          for (const [categoryName, keywords] of Object.entries(productKeywords)) {
+            const foundKeyword = keywords.some(keyword => textUpper.includes(keyword));
+            
+            if (foundKeyword) {
+              matchedCategory = categoryName;
+              confidence = 0.6;
+              break;
+            }
+          }
+        }
 
       return {
         text,
@@ -69,56 +129,7 @@
       };
     }
 
-    //Choix de catégories
-    function getCategoryFromTicketText(text) {
-          const result = getCategoryFromTicketText(text);
-          
-          // Si pas de correspondance directe, analyser le contenu du ticket
-          if (result.category === 'Autre') {
-            const textUpper = text.toUpperCase();
-            
-            // Analyser les produits/services mentionnés
-            const productKeywords = {
-              'Alimentation': ['CHIPS', 'PAIN', 'LAIT', 'FROMAGE', 'VIANDE', 'LEGUME', 'FRUIT', 'YAOURT', 'BIERE', 'VIN', 'EAU', 'JUS', 'PATES', 'RIZ', 'CONSERVE', 'SURGELE'],
-              
-              'Carburant': ['ESSENCE', 'DIESEL', 'GAZOLE', 'CARBURANT', 'SUPER', 'SP95', 'SP98', 'GASOIL'],
-              
-              'Santé': ['MEDICAMENT', 'SIROP', 'COMPRIMES', 'PANSEMENT', 'VITAMINE', 'HOMEOPATHIE', 'ORDONNANCE'],
-              
-              'Mode': ['JEAN', 'CHEMISE', 'ROBE', 'CHAUSSURE', 'SAC', 'VETEMENT', 'PANTALON', 'PULL', 'MANTEAU'],
-              
-              'Beauté': ['PARFUM', 'SHAMPOING', 'CREME', 'MAQUILLAGE', 'DENTIFRICE', 'COSMETIQUE', 'BROSSE'],
-              
-              'Maison': ['LESSIVE', 'PRODUIT MENAGER', 'EPONGE', 'AMPOULE', 'PILE', 'VAISSELLE', 'DECO'],
-              
-              'Bricolage': ['VIS', 'CLOU', 'PEINTURE', 'OUTIL', 'PERCEUSE', 'MARTEAU', 'BOIS', 'PLANCHE'],
-              
-              'Sport': ['BALLON', 'CHAUSSURE SPORT', 'SURVETEMENT', 'RAQUETTE', 'EQUIPEMENT SPORT'],
-              
-              'Culture': ['LIVRE', 'CD', 'DVD', 'JOURNAL', 'MAGAZINE', 'PAPETERIE', 'STYLO'],
-              
-              'Transport': ['TICKET', 'ABONNEMENT', 'METRO', 'BUS', 'TRAIN', 'PARKING', 'PEAGE', 'TAXI'],
-              
-              'Electronique': ['TELEPHONE', 'ORDINATEUR', 'CABLE', 'CHARGEUR', 'BATTERIE', 'ECOUTEUR', 'TV'],
-              
-              'Enfants': ['COUCHE', 'BIBERON', 'JOUET', 'PELUCHE', 'JEUX', 'LAIT INFANTILE'],
-              
-              'Animaux': ['CROQUETTE', 'LITIERE', 'LAISSE', 'JOUET CHIEN', 'NOURRITURE CHAT'],
-              
-              'Tabac': ['CIGARETTE', 'TABAC', 'BRIQUET', 'PAQUET'],
-              
-              'Services': ['PRESSING', 'COIFFEUR', 'REPARATION', 'NETTOYAGE', 'LIVRAISON']
-            };
-            
-            for (const [category, keywords] of Object.entries(productKeywords)) {
-              if (keywords.some(keyword => textUpper.includes(keyword))) {
-                return { ...result, category, confidence: 0.6 };
-              }
-            }
-          }
-          
-          return result;
-        }
+  
 
 function extractTotal(text) {
       const lines = text.split('\n');
