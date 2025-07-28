@@ -66,77 +66,72 @@
 
         const textUpper = text.toUpperCase();
 
-        // 1. D'abord essayer de détecter l'enseigne
-        const knownStores = {
-          'SUPER U': 'Alimentation',
-          'U EXPRESS': 'Alimentation', 
-          'CARREFOUR': 'Alimentation',
-          'LECLERC': 'Alimentation',
-          'MCDONALD': 'Restauration',
-          'KFC': 'Restauration',
-          'TOTAL': 'Carburant',
-          'SHELL': 'Carburant',
-          'PHARMACIE': 'Santé'
-        };
-
-        for (const [store, storeCategory] of Object.entries(knownStores)) {
-          if (textUpper.includes(store)) {
-            storeName = store;
-            category = storeCategory; // ← CORRIGÉ : c'était "matchedCategory"
-            confidence = 0.9;
-            break;
-          }
-        }
-
-        // 2. Si aucune enseigne trouvée, analyser le contenu avec système de score
-        if (category === 'Autre') {
-          const productKeywords = {
-            'Alimentation': ['CHIPS', 'PAIN', 'LAIT', 'FROMAGE', 'VIANDE', 'LEGUME', 'FRUIT', 'YAOURT', 'BIERE', 'VIN', 'EAU', 'JUS', 'PATES', 'RIZ', 'CONSERVE', 'SURGELE'],
-            'Carburant': ['ESSENCE', 'DIESEL', 'GAZOLE', 'CARBURANT', 'SUPER', 'SP95', 'SP98', 'GASOIL'],
-            'Santé': ['MEDICAMENT', 'SIROP', 'COMPRIMES', 'PANSEMENT', 'VITAMINE', 'HOMEOPATHIE', 'ORDONNANCE'],
-            'Mode': ['JEAN', 'CHEMISE', 'ROBE', 'CHAUSSURE', 'SAC', 'VETEMENT', 'PANTALON', 'PULL', 'MANTEAU'],
-            'Beauté': ['PARFUM', 'SHAMPOING', 'CREME', 'MAQUILLAGE', 'DENTIFRICE', 'COSMETIQUE', 'BROSSE'],
-            'Maison': ['LESSIVE', 'PRODUIT MENAGER', 'EPONGE', 'AMPOULE', 'PILE', 'VAISSELLE', 'DECO'],
-            'Bricolage': ['VIS', 'CLOU', 'PEINTURE', 'OUTIL', 'PERCEUSE', 'MARTEAU', 'BOIS', 'PLANCHE'],
-            'Transport': ['TICKET', 'ABONNEMENT', 'METRO', 'BUS', 'TRAIN', 'PARKING', 'PEAGE', 'TAXI']
+        // 1. Détecter les tickets CB et leur attribuer "Autre"
+        if (textUpper.includes('CARTE BANCAIRE') || textUpper.includes('CB COMPTANT')) {
+          category = 'Autre';
+          confidence = 0.9;
+          storeName = 'CARTE BANCAIRE';
+        } else {
+          // 2. Sinon, logique normale : essayer de détecter l'enseigne
+          const knownStores = {
+            'SUPER U': 'Alimentation',
+            'U EXPRESS': 'Alimentation', 
+            'CARREFOUR': 'Alimentation',
+            'LECLERC': 'Alimentation',
+            'MCDONALD': 'Restauration',
+            'KFC': 'Restauration',
+            'TOTAL': 'Carburant',
+            'SHELL': 'Carburant',
+            'PHARMACIE': 'Santé'
           };
-          
-          // ===== DEBUG AJOUTÉ ICI =====
-          console.log("=== DEBUG ===");
-          console.log("Texte analysé:", textUpper);
-          
-          // Compter les matches par catégorie
-          const categoryScores = {};
-          
-          for (const [categoryName, keywords] of Object.entries(productKeywords)) {
-            let score = 0;
-            let foundKeywords = []; // ← AJOUTÉ pour le debug
+
+          for (const [store, storeCategory] of Object.entries(knownStores)) {
+            if (textUpper.includes(store)) {
+              storeName = store;
+              category = storeCategory;
+              confidence = 0.9;
+              break;
+            }
+          }
+
+          // 3. Si aucune enseigne trouvée, analyser le contenu avec système de score
+          if (category === 'Autre') {
+            const productKeywords = {
+              'Alimentation': ['CHIPS', 'PAIN', 'LAIT', 'FROMAGE', 'VIANDE', 'LEGUME', 'FRUIT', 'YAOURT', 'BIERE', 'VIN', 'EAU', 'JUS', 'PATES', 'RIZ', 'CONSERVE', 'SURGELE'],
+              'Carburant': ['ESSENCE', 'DIESEL', 'GAZOLE', 'CARBURANT', 'SUPER', 'SP95', 'SP98', 'GASOIL'],
+              'Santé': ['MEDICAMENT', 'SIROP', 'COMPRIMES', 'PANSEMENT', 'VITAMINE', 'HOMEOPATHIE', 'ORDONNANCE'],
+              'Mode': ['JEAN', 'CHEMISE', 'ROBE', 'CHAUSSURE', 'SAC', 'VETEMENT', 'PANTALON', 'PULL', 'MANTEAU'],
+              'Beauté': ['PARFUM', 'SHAMPOING', 'CREME', 'MAQUILLAGE', 'DENTIFRICE', 'COSMETIQUE', 'BROSSE'],
+              'Maison': ['LESSIVE', 'PRODUIT MENAGER', 'EPONGE', 'AMPOULE', 'PILE', 'VAISSELLE', 'DECO'],
+              'Bricolage': ['VIS', 'CLOU', 'PEINTURE', 'OUTIL', 'PERCEUSE', 'MARTEAU', 'BOIS', 'PLANCHE'],
+              'Transport': ['TICKET', 'ABONNEMENT', 'METRO', 'BUS', 'TRAIN', 'PARKING', 'PEAGE', 'TAXI']
+            };
             
-            for (const keyword of keywords) {
-              if (textUpper.includes(keyword)) {
-                score++;
-                foundKeywords.push(keyword); // ← AJOUTÉ pour le debug
+            const categoryScores = {};
+            
+            for (const [categoryName, keywords] of Object.entries(productKeywords)) {
+              let score = 0;
+              
+              for (const keyword of keywords) {
+                if (textUpper.includes(keyword)) {
+                  score++;
+                }
+              }
+              
+              if (score > 0) {
+                categoryScores[categoryName] = score;
               }
             }
             
-            if (score > 0) {
-              categoryScores[categoryName] = score;
-              console.log(`${categoryName}: ${score} matches →`, foundKeywords); // ← DEBUG
+            if (Object.keys(categoryScores).length > 0) {
+              const bestCategory = Object.entries(categoryScores).reduce((max, [cat, score]) => 
+                score > max.score ? { category: cat, score } : max, 
+                { category: '', score: 0 }
+              );
+              
+              category = bestCategory.category;
+              confidence = 0.6;
             }
-          }
-          
-          console.log("=== FIN DEBUG ===");
-          // ===== FIN DEBUG =====
-          
-          // Prendre la catégorie avec le plus de matches
-          if (Object.keys(categoryScores).length > 0) {
-            const bestCategory = Object.entries(categoryScores).reduce((max, [cat, score]) => 
-              score > max.score ? { category: cat, score } : max, 
-              { category: '', score: 0 }
-            );
-            
-            category = bestCategory.category; // ← CORRIGÉ : c'était "matchedCategory"
-            confidence = 0.6;
           }
         }
 
