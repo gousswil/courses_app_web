@@ -52,7 +52,6 @@
         'kfc': 'Alimentaire',
       }; */
 
-      let matchedCategory = 'Autre';
       /* for (const key in keywordToCategory) {
         if (fullTextLower.includes(key)) {
           matchedCategory = keywordToCategory[key];
@@ -61,7 +60,7 @@
       } */
      // Variables pour stocker les résultats
       // Variables pour stocker les résultats
-        let storeName = null;
+       let storeName = null;
         let category = 'Autre';
         let confidence = 0;
 
@@ -83,7 +82,7 @@
         for (const [store, storeCategory] of Object.entries(knownStores)) {
           if (textUpper.includes(store)) {
             storeName = store;
-            matchedCategory = storeCategory;
+            category = storeCategory; // ← CORRIGÉ : c'était "matchedCategory"
             confidence = 0.9;
             break;
           }
@@ -102,20 +101,32 @@
             'Transport': ['TICKET', 'ABONNEMENT', 'METRO', 'BUS', 'TRAIN', 'PARKING', 'PEAGE', 'TAXI']
           };
           
+          // ===== DEBUG AJOUTÉ ICI =====
+          console.log("=== DEBUG ===");
+          console.log("Texte analysé:", textUpper);
+          
           // Compter les matches par catégorie
           const categoryScores = {};
           
           for (const [categoryName, keywords] of Object.entries(productKeywords)) {
             let score = 0;
+            let foundKeywords = []; // ← AJOUTÉ pour le debug
+            
             for (const keyword of keywords) {
               if (textUpper.includes(keyword)) {
                 score++;
+                foundKeywords.push(keyword); // ← AJOUTÉ pour le debug
               }
             }
+            
             if (score > 0) {
               categoryScores[categoryName] = score;
+              console.log(`${categoryName}: ${score} matches →`, foundKeywords); // ← DEBUG
             }
           }
+          
+          console.log("=== FIN DEBUG ===");
+          // ===== FIN DEBUG =====
           
           // Prendre la catégorie avec le plus de matches
           if (Object.keys(categoryScores).length > 0) {
@@ -124,18 +135,21 @@
               { category: '', score: 0 }
             );
             
-            matchedCategory = bestCategory.category;
+            category = bestCategory.category; // ← CORRIGÉ : c'était "matchedCategory"
             confidence = 0.6;
           }
         }
 
+        console.log(`Enseigne: ${storeName}`);
+        console.log(`Catégorie: ${category}`);
+        console.log(`Confiance: ${confidence}`);
 
 
       return {
         text,
         total,
         date: parsedDate,
-        category: matchedCategory,
+        category: category,
       };
     }
 
