@@ -72,7 +72,7 @@
           confidence = 0.9;
           storeName = 'CARTE BANCAIRE';
         } else {
-          // 2. Sinon, logique normale : essayer de détecter l'enseigne
+          // 2. Détection des enseignes avec contexte plus précis
           const knownStores = {
             'SUPER U': 'Alimentation',
             'U EXPRESS': 'Alimentation', 
@@ -80,17 +80,35 @@
             'LECLERC': 'Alimentation',
             'MCDONALD': 'Restauration',
             'KFC': 'Restauration',
-            'TOTAL': 'Carburant',
             'SHELL': 'Carburant',
             'PHARMACIE': 'Santé'
           };
 
+          // Détecter les enseignes normales (sauf TOTAL)
           for (const [store, storeCategory] of Object.entries(knownStores)) {
             if (textUpper.includes(store)) {
               storeName = store;
               category = storeCategory;
               confidence = 0.9;
               break;
+            }
+          }
+
+          // Traitement spécial pour TOTAL (station-service)
+          if (category === 'Autre') {
+            const lines = text.split('\n');
+            
+            // TOTAL est une enseigne si elle apparaît dans les premières lignes (nom du magasin)
+            const firstLines = lines.slice(0, 5).join(' ').toUpperCase();
+            
+            if (firstLines.includes('TOTAL') && 
+                (firstLines.includes('STATION') || 
+                firstLines.includes('ESSENCE') || 
+                firstLines.includes('CARBURANT') ||
+                /TOTAL\s+(?:ACCESS|ENERGIES|MARKETING)/i.test(firstLines))) {
+              storeName = 'TOTAL';
+              category = 'Carburant';
+              confidence = 0.9;
             }
           }
 
