@@ -1,4 +1,4 @@
-image: mcr.microsoft.com/devcontainers/flutter
+image: cirrusci/flutter:latest
 
 tasks:
   - init: flutter pub get
