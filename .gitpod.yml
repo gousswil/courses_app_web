@@ -4,6 +4,7 @@ tasks:
   - init: |
       git clone https://github.com/flutter/flutter.git -b stable $HOME/flutter
       echo 'export PATH="$HOME/flutter/bin:$PATH"' >> ~/.bashrc
+      echo 'export PATH="$HOME/flutter/bin:$PATH"' >> ~/.profile
       export PATH="$HOME/flutter/bin:$PATH"
       flutter doctor
     command: |
