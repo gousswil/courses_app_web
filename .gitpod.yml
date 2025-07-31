@@ -1,10 +1,5 @@
 image: gitpod/workspace-full:latest
 
-workspaceLocation: "."
-
-# Force VS Code Browser
-ide: "code"
-
 tasks:
   - init: |
       git clone https://github.com/flutter/flutter.git -b stable $HOME/flutter
@@ -24,3 +19,4 @@ ports:
 vscode:
   extensions:
     - dart-code.flutter
+    - dart-code.dart-code
