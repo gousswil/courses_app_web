@@ -1,8 +1,15 @@
-image: cirrusci/flutter:latest
+image: gitpod/workspace-full:latest
 
 tasks:
-  - init: flutter pub get
-    command: flutter run -d chrome
+  - init: |
+      git clone https://github.com/flutter/flutter.git -b stable $HOME/flutter
+      echo 'export PATH="$HOME/flutter/bin:$PATH"' >> ~/.bashrc
+      export PATH="$HOME/flutter/bin:$PATH"
+      flutter doctor
+    command: |
+      export PATH="$HOME/flutter/bin:$PATH"
+      flutter pub get
+      flutter run -d chrome
 
 ports:
   - port: 5000
