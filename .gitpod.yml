@@ -1,0 +1,13 @@
+image: mcr.microsoft.com/devcontainers/flutter
+
+tasks:
+  - init: flutter pub get
+    command: flutter run -d chrome
+
+ports:
+  - port: 5000
+    onOpen: open-preview
+
+vscode:
+  extensions:
+    - dart-code.flutter
