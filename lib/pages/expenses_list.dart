@@ -210,72 +210,112 @@ void _showImageDialog(BuildContext context, String imageBase64) {
 
   void _editExpense(Map<String, dynamic> expense) {
     final amountController = TextEditingController(text: expense['amount']?.toString() ?? '');
-    final categoryController = TextEditingController(text: expense['category'] ?? '');
     final dateController = TextEditingController(text: expense['date'] ?? '');
+    String selectedCategory = expense['category'] ?? 'Autre';
+
+    // Liste des catégories disponibles
+    const categories = [
+      'Alimentaire',
+      'Carburant',
+      'Santé',
+      'Mode',
+      'Beauté',
+      'Maison',
+      'Bricolage',
+      'Sport',
+      'Culture',
+      'Transport',
+      'Electronique',
+      'Enfants',
+      'Animaux',
+      'Tabac',
+      'Services',
+      'Autre',
+    ];
+
+    // S'assurer que la catégorie actuelle est dans la liste
+    if (!categories.contains(selectedCategory)) {
+      selectedCategory = 'Autre';
+    }
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Modifier la dépense'),
-        content: Container(
-          width: double.maxFinite,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: amountController,
-                decoration: const InputDecoration(
-                  labelText: 'Montant (€)',
-                  prefixIcon: Icon(Icons.euro),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Modifier la dépense'),
+          content: Container(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: amountController,
+                  decoration: const InputDecoration(
+                    labelText: 'Montant (€)',
+                    prefixIcon: Icon(Icons.euro),
+                  ),
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
                 ),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: categoryController,
-                decoration: const InputDecoration(
-                  labelText: 'Catégorie',
-                  prefixIcon: Icon(Icons.category),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: selectedCategory,
+                  decoration: const InputDecoration(
+                    labelText: 'Catégorie',
+                    prefixIcon: Icon(Icons.category),
+                  ),
+                  items: categories.map((category) => 
+                    DropdownMenuItem(
+                      value: category,
+                      child: Text(category),
+                    )
+                  ).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setDialogState(() {
+                        selectedCategory = newValue;
+                      });
+                    }
+                  },
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: dateController,
-                decoration: const InputDecoration(
-                  labelText: 'Date (YYYY-MM-DD)',
-                  prefixIcon: Icon(Icons.calendar_today),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: dateController,
+                  decoration: const InputDecoration(
+                    labelText: 'Date (YYYY-MM-DD)',
+                    prefixIcon: Icon(Icons.calendar_today),
+                  ),
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.tryParse(expense['date'] ?? '') ?? DateTime.now(),
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (date != null) {
+                      dateController.text = date.toIso8601String().split('T')[0];
+                    }
+                  },
+                  readOnly: true,
                 ),
-                onTap: () async {
-                  final date = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.tryParse(expense['date'] ?? '') ?? DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                  );
-                  if (date != null) {
-                    dateController.text = date.toIso8601String().split('T')[0];
-                  }
-                },
-                readOnly: true,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Annuler'),
-          ),
-          TextButton(
-            onPressed: () => _saveExpenseChanges(
-              expense,
-              amountController.text,
-              categoryController.text,
-              dateController.text,
+              ],
             ),
-            child: const Text('Sauvegarder'),
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () => _saveExpenseChanges(
+                expense,
+                amountController.text,
+                selectedCategory,
+                dateController.text,
+              ),
+              child: const Text('Sauvegarder'),
+            ),
+          ],
+        ),
       ),
     );
   }
