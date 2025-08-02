@@ -11,7 +11,7 @@ class ExpensesList extends StatefulWidget {
 
 class _ExpensesListState extends State<ExpensesList> {
   final SupabaseService _supabaseService = SupabaseService();
-  List<Map<String, dynamic>> _expenses = [];
+  Map<String, List<Map<String, dynamic>>> _groupedExpenses = {};
   bool _isLoading = true;
 
   @override
@@ -22,9 +22,21 @@ class _ExpensesListState extends State<ExpensesList> {
 
   Future<void> _loadExpenses() async {
     try {
-      final data = await _supabaseService.getExpenses();
+      final expenses = await _supabaseService.getExpenses();
+
+      // Trie par date décroissante
+      expenses.sort((a, b) => b['date'].compareTo(a['date']));
+
+      final Map<String, List<Map<String, dynamic>>> grouped = {};
+
+      for (final expense in expenses) {
+        final date = DateTime.parse(expense['date']);
+        final key = DateFormat.yMMMM('fr_FR').format(date); // "août 2025"
+        grouped.putIfAbsent(key, () => []).add(expense);
+      }
+
       setState(() {
-        _expenses = data;
+        _groupedExpenses = grouped;
         _isLoading = false;
       });
     } catch (e) {
@@ -40,94 +52,59 @@ class _ExpensesListState extends State<ExpensesList> {
     return DateFormat('dd/MM/yyyy').format(date);
   }
 
-
-  // Méthode pour afficher l'image en grand
-void _showImageDialog(BuildContext context, String imageBase64) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return Dialog(
-        backgroundColor: Colors.transparent,
-        child: Stack(
-          children: [
-            // Image en grand avec Hero animation
-            Center(
-              child: Hero(
-                tag: 'expense_image_$imageBase64',
-                child: InteractiveViewer(
-                  child: Image.memory(
-                    UriData.parse(imageBase64).contentAsBytes(),
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-            ),
-            // Bouton fermer
-            Positioned(
-              top: 40,
-              right: 20,
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.black54,
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Historique des dépenses')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _expenses.isEmpty
+          : _groupedExpenses.isEmpty
               ? const Center(child: Text('Aucune dépense enregistrée.'))
-              : ListView.builder(
-                  itemCount: _expenses.length,
-                  itemBuilder: (context, index) {
-                    final expense = _expenses[index];
-                    final amount = expense['amount'] ?? '?';
-                    final category = expense['category'] ?? '?';
-                    final date = expense['date'] ?? '';
-                    final imageBase64 = expense['image_base64'] ?? '';
-                        return Card(
-                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            child: ListTile(
+              : ListView(
+                  children: _groupedExpenses.entries.map((entry) {
+                    final groupTitle = entry.key;
+                    final expenses = entry.value;
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            groupTitle[0].toUpperCase() + groupTitle.substring(1),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blueAccent,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ...expenses.map((expense) {
+                            final amount = expense['amount'] ?? '?';
+                            final category = expense['category'] ?? '?';
+                            final date = expense['date'] ?? '';
+                            final imageBase64 = expense['image_base64'] ?? '';
+
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: ListTile(
                                 leading: imageBase64.isNotEmpty
-                                   ? MouseRegion(
-                                    cursor: SystemMouseCursors.click,
-                                    child: GestureDetector(
-                                    onTap: () => _showImageDialog(context, imageBase64),
-                                    child: Hero(
-                                        tag: 'expense_image_$imageBase64',
-                                        child: Image.memory(
+                                    ? Image.memory(
                                         UriData.parse(imageBase64).contentAsBytes(),
                                         width: 48,
                                         height: 48,
                                         fit: BoxFit.cover,
-                                        ),
-                                    ),
-                                    ),
-                                )
-                                    : const Icon(Icons.receipt_long),
+                                      )
+                                    : const Icon(Icons.receipt),
                                 title: Text('$amount € - $category'),
                                 subtitle: Text(_formatDate(date)),
-                            ),
+                              ),
                             );
-                  },
+                          }).toList(),
+                        ],
+                      ),
+                    );
+                  }).toList(),
                 ),
     );
   }
