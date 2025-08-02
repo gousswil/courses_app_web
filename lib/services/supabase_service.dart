@@ -47,4 +47,40 @@ class SupabaseService {
       }
     }
 
+  /// Supprime une dépense de l'utilisateur connecté
+  Future<void> deleteExpense(String expenseId) async {
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      throw Exception('Utilisateur non connecté');
+    }
+
+    try {
+      await _client
+          .from('expenses')
+          .delete()
+          .eq('id', expenseId)
+          .eq('user_id', user.id); // Sécurité : vérifier que c'est bien la dépense de l'utilisateur
+    } catch (error) {
+      throw Exception('Erreur lors de la suppression : $error');
+    }
+  }
+
+  /// Met à jour une dépense de l'utilisateur connecté
+  Future<void> updateExpense(String expenseId, Map<String, dynamic> updates) async {
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      throw Exception('Utilisateur non connecté');
+    }
+
+    try {
+      await _client
+          .from('expenses')
+          .update(updates)
+          .eq('id', expenseId)
+          .eq('user_id', user.id); // Sécurité : vérifier que c'est bien la dépense de l'utilisateur
+    } catch (error) {
+      throw Exception('Erreur lors de la mise à jour : $error');
+    }
+  }
+
 }

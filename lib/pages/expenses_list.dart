@@ -159,6 +159,209 @@ void _showImageDialog(BuildContext context, String imageBase64) {
     },
   );
 }
+   Future<void> _deleteExpense(Map<String, dynamic> expense) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer la dépense'),
+        content: Text(
+          'Voulez-vous vraiment supprimer cette dépense de ${expense['amount']}€ (${expense['category']}) ?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        // Utilisation du service pour supprimer
+        await _supabaseService.deleteExpense(expense['id'].toString());
+
+        setState(() {
+          _expenses.removeWhere((e) => e['id'] == expense['id']);
+          _groupExpensesByDate();
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Dépense supprimée avec succès'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de la suppression: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _editExpense(Map<String, dynamic> expense) {
+    final amountController = TextEditingController(text: expense['amount']?.toString() ?? '');
+    final categoryController = TextEditingController(text: expense['category'] ?? '');
+    final dateController = TextEditingController(text: expense['date'] ?? '');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Modifier la dépense'),
+        content: Container(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: amountController,
+                decoration: const InputDecoration(
+                  labelText: 'Montant (€)',
+                  prefixIcon: Icon(Icons.euro),
+                ),
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: categoryController,
+                decoration: const InputDecoration(
+                  labelText: 'Catégorie',
+                  prefixIcon: Icon(Icons.category),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: dateController,
+                decoration: const InputDecoration(
+                  labelText: 'Date (YYYY-MM-DD)',
+                  prefixIcon: Icon(Icons.calendar_today),
+                ),
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.tryParse(expense['date'] ?? '') ?? DateTime.now(),
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+                  if (date != null) {
+                    dateController.text = date.toIso8601String().split('T')[0];
+                  }
+                },
+                readOnly: true,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => _saveExpenseChanges(
+              expense,
+              amountController.text,
+              categoryController.text,
+              dateController.text,
+            ),
+            child: const Text('Sauvegarder'),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  Future<void> _saveExpenseChanges(
+    Map<String, dynamic> originalExpense,
+    String newAmount,
+    String newCategory,
+    String newDate,
+  ) async {
+    if (newAmount.isEmpty || newCategory.isEmpty || newDate.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tous les champs sont obligatoires'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Validation du montant
+    final amount = double.tryParse(newAmount);
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Le montant doit être un nombre positif'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Validation de la date
+    final date = DateTime.tryParse(newDate);
+    if (date == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Format de date invalide'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Utilisation du service pour mettre à jour
+      await _supabaseService.updateExpense(
+        originalExpense['id'].toString(),
+        {
+          'amount': amount,
+          'category': newCategory.trim(),
+          'date': newDate,
+        },
+      );
+
+      setState(() {
+        final index = _expenses.indexWhere((e) => e['id'] == originalExpense['id']);
+        if (index != -1) {
+          _expenses[index] = {
+            ..._expenses[index],
+            'amount': amount.toString(),
+            'category': newCategory.trim(),
+            'date': newDate,
+          };
+        }
+        _groupExpensesByDate();
+      });
+
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Dépense modifiée avec succès'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors de la modification: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
 
 Widget _buildYearSelector() {
     return Container(
@@ -449,7 +652,7 @@ Widget _buildYearSelector() {
     return colors[category.hashCode % colors.length];
   }
 
-  Widget _buildExpenseCards() {
+    Widget _buildExpenseCards() {
     final filteredExpenses = _expenses.where((expense) {
       final dateStr = expense['date'] ?? '';
       if (dateStr.isEmpty) return false;
@@ -544,6 +747,87 @@ Widget _buildYearSelector() {
                     fontSize: _showGraphics ? 12 : 14,
                   ),
                 ),
+                trailing: _showGraphics ? null : PopupMenuButton<String>(
+                  onSelected: (value) {
+                    switch (value) {
+                      case 'edit':
+                        _editExpense(expense);
+                        break;
+                      case 'delete':
+                        _deleteExpense(expense);
+                        break;
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, size: 20),
+                          SizedBox(width: 8),
+                          Text('Modifier'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, size: 20, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Supprimer', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                onLongPress: _showGraphics ? () {
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (context) => Container(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '$amount € - $category',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(_formatDate(date)),
+                          const SizedBox(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  _editExpense(expense);
+                                },
+                                icon: const Icon(Icons.edit),
+                                label: const Text('Modifier'),
+                              ),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  _deleteExpense(expense);
+                                },
+                                icon: const Icon(Icons.delete),
+                                label: const Text('Supprimer'),
+                                style: ElevatedButton.styleFrom(
+                                  foregroundColor: Colors.white,
+                                  backgroundColor: Colors.red,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                } : null,
               ),
             );
           },
