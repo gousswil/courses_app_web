@@ -44365,8 +44365,7 @@ s===$&&A.a()
 return new A.VR(new A.S6(s),A.b([],t.H7),A.x(t.N,t.Gj))}}
 A.VR.prototype={
 aq(){this.aI()
-this.yH()
-this.ab4()},
+this.yH()},
 ab4(){var s,r,q,p,o,n,m,l,k,j,i,h,g,f=this,e=f.r
 e.a1(0)
 for(s=J.aU(f.e),r=t.N,q=t.V0,p=t.i;s.u();){o=s.gM(s)
@@ -44410,6 +44409,7 @@ s=6
 return A.G(o.d.xb(),$async$yH)
 case 6:n=b
 o.a7(new A.at1(o,n))
+o.ab4()
 q=1
 s=5
 break

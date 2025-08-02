@@ -25,7 +25,7 @@ class _ExpensesListState extends State<ExpensesList> {
   void initState() {
     super.initState();
     _loadExpenses();
-    _groupExpensesByDate();
+    // _groupExpensesByDate();
   }
 
 void _groupExpensesByDate() {
@@ -103,6 +103,7 @@ void _groupExpensesByDate() {
         _expenses = data;
         _isLoading = false;
       });
+      _groupExpensesByDate();
     } catch (e) {
       print('❌ Erreur de chargement des dépenses : $e');
       setState(() {
