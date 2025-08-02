@@ -157,7 +157,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
 
     _amountController.clear();
     _dateController.clear();
-    ExpensesCache().clear();
+     ExpensesCache.clear();
     setState(() {
       _selectedCategory = 'Alimentaire';
       _selectedDate = DateTime.now();

@@ -101,10 +101,10 @@ void _groupExpensesByDate() {
 
   Future<void> _loadExpenses() async {
 
-    final cache = ExpensesCache();
-     if (cache.isLoaded) {
+    // final cache = ExpensesCache();
+     if (ExpensesCache.isLoaded) {
       print("✅ Chargement depuis le cache");
-      _expenses = cache.expenses!;
+      _expenses = ExpensesCache.expenses!;
     } else{
        try {
         final data = await _supabaseService.getExpenses();
@@ -112,6 +112,7 @@ void _groupExpensesByDate() {
           _expenses = data;
           _isLoading = false;
         });
+        await ExpensesCache.load(_expenses);
         _groupExpensesByDate();
       } catch (e) {
         print('❌ Erreur de chargement des dépenses : $e');
@@ -126,7 +127,7 @@ void _groupExpensesByDate() {
    Future<void> _refreshExpenses() async {
     print("♻️ Rafraîchissement depuis Supabase");
     final freshExpenses = await _supabaseService.getExpenses();
-    ExpensesCache().setExpenses(freshExpenses);
+    await ExpensesCache.load(freshExpenses);
 
     setState(() {
       _expenses = freshExpenses;
