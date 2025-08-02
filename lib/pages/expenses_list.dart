@@ -20,6 +20,7 @@ class _ExpensesListState extends State<ExpensesList> {
   String _selectedYear = '';
   String _selectedMonth = '';
   bool _showGraphics = false;
+  bool _showExpenseList = true;
 
   @override
   void initState() {
@@ -222,7 +223,8 @@ Widget _buildYearSelector() {
     );
   }
 
-  Widget _buildCategoryChart() {
+
+    Widget _buildCategoryChart() {
     if (_selectedYear.isEmpty || _selectedMonth.isEmpty ||
         _groupedExpenses[_selectedYear]?[_selectedMonth] == null) {
       return const Center(child: Text('Aucune donnée à afficher'));
@@ -294,6 +296,7 @@ Widget _buildYearSelector() {
       ],
     );
   }
+
 
   Widget _buildMonthlyChart() {
     if (_selectedYear.isEmpty || _groupedExpenses[_selectedYear] == null) {
@@ -404,42 +407,97 @@ Widget _buildYearSelector() {
       );
     }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: filteredExpenses.length,
-      itemBuilder: (context, index) {
-        final expense = filteredExpenses[index];
-        final amount = expense['amount'] ?? '?';
-        final category = expense['category'] ?? '?';
-        final date = expense['date'] ?? '';
-        final imageBase64 = expense['image_base64'] ?? '';
-        
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: ListTile(
-            leading: imageBase64.isNotEmpty
-                ? MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: GestureDetector(
-                      onTap: () => _showImageDialog(context, imageBase64),
-                      child: Hero(
-                        tag: 'expense_image_$imageBase64',
-                        child: Image.memory(
-                          UriData.parse(imageBase64).contentAsBytes(),
-                          width: 48,
-                          height: 48,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  )
-                : const Icon(Icons.receipt_long),
-            title: Text('$amount € - $category'),
-            subtitle: Text(_formatDate(date)),
+    // En mode graphique, limiter l'affichage à 5 éléments avec un bouton "Voir plus"
+    final displayCount = _showGraphics && !_showExpenseList ? 5 : filteredExpenses.length;
+    final limitedExpenses = filteredExpenses.take(displayCount).toList();
+    final hasMore = filteredExpenses.length > displayCount;
+
+    return Column(
+      children: [
+        if (_showGraphics && filteredExpenses.isNotEmpty)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                Icon(Icons.receipt, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 8),
+                Text(
+                  '${filteredExpenses.length} dépense${filteredExpenses.length > 1 ? 's' : ''} - ${_getMonthName(_selectedMonth)} $_selectedYear',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
           ),
-        );
-      },
+        
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: limitedExpenses.length,
+          itemBuilder: (context, index) {
+            final expense = limitedExpenses[index];
+            final amount = expense['amount'] ?? '?';
+            final category = expense['category'] ?? '?';
+            final date = expense['date'] ?? '';
+            final imageBase64 = expense['image_base64'] ?? '';
+            
+            return Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              elevation: _showGraphics ? 1 : 2, // Moins d'élévation en mode graphique
+              child: ListTile(
+                dense: _showGraphics, // Plus compact en mode graphique
+                leading: imageBase64.isNotEmpty
+                    ? MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: () => _showImageDialog(context, imageBase64),
+                          child: Hero(
+                            tag: 'expense_image_$imageBase64',
+                            child: Image.memory(
+                              UriData.parse(imageBase64).contentAsBytes(),
+                              width: _showGraphics ? 40 : 48,
+                              height: _showGraphics ? 40 : 48,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Icon(Icons.receipt_long, 
+                           size: _showGraphics ? 20 : 24),
+                title: Text(
+                  '$amount € - $category',
+                  style: TextStyle(
+                    fontSize: _showGraphics ? 14 : 16,
+                  ),
+                ),
+                subtitle: Text(
+                  _formatDate(date),
+                  style: TextStyle(
+                    fontSize: _showGraphics ? 12 : 14,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        
+        if (hasMore)
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: OutlinedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _showExpenseList = true;
+                });
+              },
+              icon: const Icon(Icons.expand_more),
+              label: Text('Voir les ${filteredExpenses.length - displayCount} autres dépenses'),
+            ),
+          ),
+      ],
     );
   }
 
@@ -449,11 +507,23 @@ Widget _buildYearSelector() {
       appBar: AppBar(
         title: const Text('Historique des dépenses'),
         actions: [
+          if (_showGraphics)
+            IconButton(
+              icon: Icon(_showExpenseList ? Icons.visibility_off : Icons.visibility),
+              tooltip: _showExpenseList ? 'Masquer la liste' : 'Afficher la liste',
+              onPressed: () {
+                setState(() {
+                  _showExpenseList = !_showExpenseList;
+                });
+              },
+            ),
           IconButton(
             icon: Icon(_showGraphics ? Icons.list : Icons.bar_chart),
+            tooltip: _showGraphics ? 'Mode liste' : 'Mode graphiques',
             onPressed: () {
               setState(() {
                 _showGraphics = !_showGraphics;
+                if (_showGraphics) _showExpenseList = false; // Masquer par défaut en mode graphique
               });
             },
           ),
@@ -479,9 +549,10 @@ Widget _buildYearSelector() {
                           padding: const EdgeInsets.all(16),
                           child: _buildMonthlyChart(),
                         ),
-                        const Divider(),
+                        const SizedBox(height: 16),
                       ],
-                      _buildExpenseCards(),
+                      if (!_showGraphics || _showExpenseList)
+                        _buildExpenseCards(),
                     ],
                   ),
                 ),
