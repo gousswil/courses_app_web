@@ -313,6 +313,14 @@
       ]
     },
     {
+      "name": "equatable",
+      "version": "2.0.7",
+      "dependencies": [
+        "collection",
+        "meta"
+      ]
+    },
+    {
       "name": "nested",
       "version": "1.0.0",
       "dependencies": [
@@ -776,14 +784,6 @@
       "version": "1.0.1",
       "dependencies": [
         "web"
-      ]
-    },
-    {
-      "name": "equatable",
-      "version": "2.0.7",
-      "dependencies": [
-        "collection",
-        "meta"
       ]
     }
   ],

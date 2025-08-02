@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'dart:js' as js;
 import 'package:js/js_util.dart' show allowInterop;
 import 'services/supabase_service.dart'; // 👈 Nouveau
+import 'cache/expenses_cache.dart'; // <- à créer
 
 class ExpenseForm extends StatefulWidget {
   const ExpenseForm({super.key});
@@ -156,6 +157,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
 
     _amountController.clear();
     _dateController.clear();
+    ExpensesCache().clear();
     setState(() {
       _selectedCategory = 'Alimentaire';
       _selectedDate = DateTime.now();

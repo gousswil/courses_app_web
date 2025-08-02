@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+// import 'package:intl/intl.dart';
 import '../services/supabase_service.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'dart:convert';
-import 'dart:typed_data';
+// import 'dart:convert';
+// import 'dart:typed_data';
+import '../cache/expenses_cache.dart'; // <- à créer
+
 
 class ExpensesList extends StatefulWidget {
   const ExpensesList({super.key});
@@ -98,19 +100,37 @@ void _groupExpensesByDate() {
   // }
 
   Future<void> _loadExpenses() async {
-    try {
-      final data = await _supabaseService.getExpenses();
-      setState(() {
-        _expenses = data;
-        _isLoading = false;
-      });
-      _groupExpensesByDate();
-    } catch (e) {
-      print('❌ Erreur de chargement des dépenses : $e');
-      setState(() {
-        _isLoading = false;
-      });
+
+    final cache = ExpensesCache();
+     if (cache.isLoaded) {
+      print("✅ Chargement depuis le cache");
+      _expenses = cache.expenses!;
+    } else{
+       try {
+        final data = await _supabaseService.getExpenses();
+        setState(() {
+          _expenses = data;
+          _isLoading = false;
+        });
+        _groupExpensesByDate();
+      } catch (e) {
+        print('❌ Erreur de chargement des dépenses : $e');
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+   
+  }
+
+   Future<void> _refreshExpenses() async {
+    print("♻️ Rafraîchissement depuis Supabase");
+    final freshExpenses = await _supabaseService.getExpenses();
+    ExpensesCache().setExpenses(freshExpenses);
+
+    setState(() {
+      _expenses = freshExpenses;
+    });
   }
 
 
@@ -896,6 +916,10 @@ Widget _buildYearSelector() {
       appBar: AppBar(
         title: const Text('Historique des dépenses'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _refreshExpenses,
+          ),
           if (_showGraphics)
             IconButton(
               icon: Icon(_showExpenseList ? Icons.visibility_off : Icons.visibility),
