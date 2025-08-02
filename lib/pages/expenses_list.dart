@@ -99,35 +99,77 @@ void _groupExpensesByDate() {
   //   );
   // }
 
-  Future<void> _loadExpenses() async {
+  // Future<void> _loadExpenses() async {
 
-    // final cache = ExpensesCache();
-     if (ExpensesCache.isLoaded) {
-      print("✅ Chargement depuis le cache");
-      _expenses = ExpensesCache.expenses!;
-    } else{
-       try {
-        final data = await _supabaseService.getExpenses();
+  //   // final cache = ExpensesCache();
+  //    if (ExpensesCache.isLoaded) {
+  //     print("✅ Chargement depuis le cache");
+  //     _expenses = ExpensesCache.expenses!;
+  //   } else{
+  //      try {
+  //       final data = await _supabaseService.getExpenses();
+  //       setState(() {
+  //         _expenses = data;
+  //         _isLoading = false;
+  //       });
+  //       await ExpensesCache.load(_expenses);
+  //       _groupExpensesByDate();
+  //     } catch (e) {
+  //       print('❌ Erreur de chargement des dépenses : $e');
+  //       setState(() {
+  //         _isLoading = false;
+  //       });
+  //     }
+  //   }
+   
+  // }
+
+    Future<void> _loadExpenses() async {
+      try {
         setState(() {
-          _expenses = data;
+          _isLoading = true;
+        });
+
+        // 🔁 Étape 1 : tenter le cache
+        final cached = await ExpensesCache.load(); // ou ExpenseCache.load()
+        if (cached != null && cached.isNotEmpty) {
+          setState(() {
+            _expenses = cached;
+            _isLoading = false;
+          });
+          return;
+        }
+
+        // 🔁 Étape 2 : fallback Supabase
+        setState(() {
+          print("✅ Chargement depuis Supabase...");
+        });
+
+        final data = await _supabaseService.getExpenses();
+        _expenses = data;
+
+        // 🧠 Mettre en cache les nouvelles données
+        await ExpensesCache.save(_expenses);
+
+        setState(() {
           _isLoading = false;
         });
-        await ExpensesCache.load(_expenses);
-        _groupExpensesByDate();
+
       } catch (e) {
-        print('❌ Erreur de chargement des dépenses : $e');
+        print('❌ Erreur chargement : $e');
         setState(() {
+          print("Erreur de chargement");
           _isLoading = false;
         });
       }
     }
-   
-  }
+
+  
 
    Future<void> _refreshExpenses() async {
     print("♻️ Rafraîchissement depuis Supabase");
     final freshExpenses = await _supabaseService.getExpenses();
-    await ExpensesCache.load(freshExpenses);
+    await ExpensesCache.save(freshExpenses);
 
     setState(() {
       _expenses = freshExpenses;

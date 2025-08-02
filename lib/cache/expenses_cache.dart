@@ -8,9 +8,12 @@ class ExpensesCache {
 
   static List<Map<String, dynamic>>? get expenses => _cachedExpenses;
 
-  static Future<void> load(List<Map<String, dynamic>> expenses) async {
-    // debugPrint("📥 Chargement du cache avec ${expenses.length} éléments");
+  static Future<void> save(List<Map<String, dynamic>> expenses) async {
     _cachedExpenses = expenses;
+  }
+
+  static List<Map<String, dynamic>>? load() {
+    return _cachedExpenses;
   }
 
   static void clear() {
