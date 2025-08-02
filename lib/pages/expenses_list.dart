@@ -325,6 +325,10 @@ Widget _buildYearSelector() {
       );
     }).toList();
 
+    final maxValue = monthlyTotals.values.isNotEmpty 
+        ? monthlyTotals.values.reduce((a, b) => a > b ? a : b) 
+        : 0.0;
+
     return Column(
       children: [
         Text(
@@ -338,13 +342,38 @@ Widget _buildYearSelector() {
           child: BarChart(
             BarChartData(
               barGroups: barGroups,
+              extraLinesData: ExtraLinesData(
+                horizontalLines: [],
+              ),
+              barTouchData: BarTouchData(
+                enabled: true,
+                touchTooltipData: BarTouchTooltipData(
+                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                    final month = sortedMonths[group.x];
+                    final monthName = _getMonthName(month);
+                    return BarTooltipItem(
+                      '$monthName\n${rod.toY.toStringAsFixed(2)}€',
+                      const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  },
+                ),
+              ),
               titlesData: FlTitlesData(
                 bottomTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
                     getTitlesWidget: (value, meta) {
                       if (value.toInt() < sortedMonths.length) {
-                        return Text(_getMonthName(sortedMonths[value.toInt()]));
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            _getMonthName(sortedMonths[value.toInt()]),
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        );
                       }
                       return const Text('');
                     },
@@ -353,15 +382,51 @@ Widget _buildYearSelector() {
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    getTitlesWidget: (value, meta) => Text('${value.toInt()}€'),
+                    reservedSize: 60,
+                    getTitlesWidget: (value, meta) => Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: Text(
+                        '${value.toInt()}€',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                    ),
                   ),
                 ),
                 rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
               ),
               borderData: FlBorderData(show: false),
-              gridData: const FlGridData(show: true),
+              gridData: const FlGridData(show: true, drawVerticalLine: false),
+              maxY: maxValue * 1.2, // 20% d'espace en plus pour les labels
             ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Affichage des totaux sous le graphique
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Wrap(
+            spacing: 16,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: sortedMonths.map((month) {
+              final total = monthlyTotals[month]!;
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                ),
+                child: Text(
+                  '${_getMonthName(month)}: ${total.toStringAsFixed(2)}€',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ),
       ],
